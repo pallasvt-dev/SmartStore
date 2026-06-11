@@ -1,0 +1,31 @@
+@model SmartStore.Models.Product
+@{
+    ViewData["Title"] = "Xóa sản phẩm";
+}
+
+<section class="admin-section">
+    <div class="container narrow-container">
+        <div class="admin-page-heading">
+            <a class="back-link" asp-action="Index"><i class="fa-solid fa-arrow-left"></i> Quay lại quản lý</a>
+            <span class="eyebrow danger"><i class="fa-solid fa-triangle-exclamation"></i> Xác nhận xóa</span>
+            <h1>Xóa sản phẩm</h1>
+            <p>Bạn có chắc chắn muốn xóa sản phẩm này khỏi danh sách bán hàng không?</p>
+        </div>
+
+        <div class="delete-card">
+            <div class="admin-product-cell large">
+                <img src="@Model.ImageUrl" alt="@Model.Name" />
+                <div>
+                    <strong>@Model.Name</strong>
+                    <span>@Model.Category • @Model.Price.ToString("N0") đ</span>
+                </div>
+            </div>
+            <p>Sau khi xóa, sản phẩm sẽ không còn xuất hiện trên trang chủ và trang quản lý trong phiên chạy hiện tại.</p>
+            <form asp-action="Delete" asp-route-id="@Model.Id" method="post" class="form-actions">
+                @Html.AntiForgeryToken()
+                <button type="submit" class="btn btn-danger-custom"><i class="fa-solid fa-trash me-1"></i> Xóa sản phẩm</button>
+                <a class="btn btn-outline-custom" asp-action="Index">Hủy</a>
+            </form>
+        </div>
+    </div>
+</section>

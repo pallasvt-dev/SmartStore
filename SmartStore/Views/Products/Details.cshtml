@@ -1,0 +1,43 @@
+@model SmartStore.Models.Product
+@{
+    ViewData["Title"] = "Chi tiết sản phẩm";
+}
+
+<section class="admin-section">
+    <div class="container narrow-container">
+        <div class="admin-page-heading">
+            <a class="back-link" asp-action="Index"><i class="fa-solid fa-arrow-left"></i> Quay lại quản lý</a>
+            <span class="eyebrow dark"><i class="fa-solid fa-eye"></i> Chi tiết</span>
+            <h1>@Model.Name</h1>
+        </div>
+
+        <div class="admin-detail-card">
+            <div class="admin-detail-image">
+                <span class="product-badge detail-badge">@Model.Badge</span>
+                <img src="@Model.ImageUrl" alt="@Model.Name" />
+            </div>
+            <div class="admin-detail-content">
+                <span class="admin-chip">@Model.Category</span>
+                <h2>@Model.Name</h2>
+                <p>@Model.Description</p>
+                <div class="detail-price">
+                    <strong>@Model.Price.ToString("N0") đ</strong>
+                    @if (Model.OldPrice.HasValue)
+                    {
+                        <del>@Model.OldPrice.Value.ToString("N0") đ</del>
+                    }
+                </div>
+                <div class="detail-info-grid">
+                    <div><i class="fa-solid fa-star"></i><span>@Model.Rating/5</span></div>
+                    <div><i class="fa-solid fa-box-open"></i><span>@Model.StockStatus</span></div>
+                    <div><i class="fa-solid fa-hashtag"></i><span>ID: @Model.Id</span></div>
+                </div>
+                <div class="form-actions">
+                    <a class="btn btn-primary-custom" asp-action="Edit" asp-route-id="@Model.Id"><i class="fa-solid fa-pen me-1"></i> Sửa sản phẩm</a>
+                    <a class="btn btn-outline-custom" asp-action="Delete" asp-route-id="@Model.Id"><i class="fa-solid fa-trash me-1"></i> Xóa</a>
+                    <a class="btn btn-outline-custom" asp-controller="Home" asp-action="Details" asp-route-id="@Model.Id"><i class="fa-solid fa-store me-1"></i> Xem trang khách</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
