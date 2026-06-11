@@ -1,0 +1,27 @@
+SmartStore đã được ghép code từ WebBanHang.
+
+Nội dung đã chuyển:
+- AccountController: đăng nhập, đăng ký, Google Login, quên mật khẩu/reset password.
+- ProductsController: CRUD sản phẩm.
+- CartController + ViewComponent: giỏ hàng bằng Session.
+- Identity + Entity Framework Core SQL Server.
+- Views Account/Cart/Home/Products/Shared.
+- Models, Services gửi email SMTP, Data/Migrations, wwwroot.
+
+Cách chạy:
+1. Mở SmartStore.slnx bằng Visual Studio 2022 hoặc Cursor/VS Code.
+2. Kiểm tra ConnectionStrings:DefaultConnection trong SmartStore/appsettings.json.
+3. Chạy lệnh trong thư mục SmartStore/SmartStore:
+   dotnet restore
+   dotnet run
+
+Ghi chú: Program.cs đã được thêm Database.MigrateAsync() để tự apply migration khi app khởi động. Nếu muốn làm thủ công vẫn có thể chạy: dotnet ef database update
+4. Nếu dùng Google Login, Redirect URI cần có:
+   http://localhost:5151/signin-google
+   https://localhost:7006/signin-google
+
+Lưu ý bảo mật:
+- Không nên commit appsettings.json có Gmail App Password hoặc Google Client Secret lên GitHub.
+- Nên đổi secret và dùng User Secrets/appsettings.Development.json khi nộp hoặc public code.
+
+File .gitignore đã được giữ để tránh commit bin/obj/.vs và appsettings chứa secret.

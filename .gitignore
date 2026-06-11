@@ -46,6 +46,7 @@ ScaffoldingReadMe.txt
 !**/appsettings.example.json
 
 # Others
+*.csproj.user
 ~$*
 *~
 CodeCoverage/
