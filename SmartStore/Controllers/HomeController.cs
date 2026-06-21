@@ -1,26 +1,48 @@
 using Microsoft.AspNetCore.Mvc;
-using System.Diagnostics;
+using Microsoft.EntityFrameworkCore;
+using SmartStore.Data;
 using SmartStore.Models;
+using System.Diagnostics;
 
 namespace SmartStore.Controllers
 {
     public class HomeController : Controller
     {
+        private readonly ApplicationDbContext _dbContext;
         private readonly ILogger<HomeController> _logger;
 
-        public HomeController(ILogger<HomeController> logger)
+        public HomeController(ApplicationDbContext dbContext, ILogger<HomeController> logger)
         {
+            _dbContext = dbContext;
             _logger = logger;
         }
 
-        public IActionResult Index()
+        public async Task<IActionResult> Index()
         {
-            return View(ProductRepository.Products);
+            var products = await _dbContext.Products
+                .Include(product => product.Category)
+                .Include(product => product.Brand)
+                .Include(product => product.ProductImages)
+                .Include(product => product.ProductVariants)
+                .Where(product => product.IsActive)
+                .OrderByDescending(product => product.Id)
+                .ToListAsync();
+
+            return View(products);
         }
 
-        public IActionResult Details(int id)
+        public async Task<IActionResult> Details(int id)
         {
-            var product = ProductRepository.Products.FirstOrDefault(p => p.Id == id);
+            var product = await _dbContext.Products
+                .Include(item => item.Category)
+                .Include(item => item.Brand)
+                .Include(item => item.ProductImages)
+                .Include(item => item.ProductVariants)
+                    .ThenInclude(variant => variant.Size)
+                .Include(item => item.ProductVariants)
+                    .ThenInclude(variant => variant.Color)
+                .FirstOrDefaultAsync(item => item.Id == id && item.IsActive);
+
             if (product == null)
             {
                 return NotFound();

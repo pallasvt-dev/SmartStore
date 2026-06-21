@@ -1,8 +1,10 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Globalization;
+using Microsoft.EntityFrameworkCore;
+using SmartStore.Data;
 using SmartStore.Extensions;
 using SmartStore.Models;
+using System.Globalization;
 
 namespace SmartStore.Controllers
 {
@@ -11,6 +13,12 @@ namespace SmartStore.Controllers
     {
         private const string CartSessionKey = "SHOPPING_CART";
         private const int MaxCartQuantity = 5;
+        private readonly ApplicationDbContext _dbContext;
+
+        public CartController(ApplicationDbContext dbContext)
+        {
+            _dbContext = dbContext;
+        }
 
         public IActionResult Index()
         {
@@ -19,12 +27,27 @@ namespace SmartStore.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult Add(int id, int quantity = 1, string? returnUrl = null)
+        public async Task<IActionResult> Add(int productVariantId, int quantity = 1, string? returnUrl = null)
         {
-            var product = ProductRepository.Products.FirstOrDefault(p => p.Id == id);
-            if (product == null)
+            var variant = await _dbContext.ProductVariants
+                .Include(item => item.Product)
+                    .ThenInclude(product => product.ProductImages)
+                .Include(item => item.Size)
+                .Include(item => item.Color)
+                .FirstOrDefaultAsync(item => item.Id == productVariantId && item.IsActive && item.Product.IsActive);
+
+            if (variant == null)
             {
                 return NotFound();
+            }
+
+            if (variant.StockQuantity <= 0)
+            {
+                const string outOfStockMessage = "Biến thể này đang hết hàng.";
+                TempData["CartMessage"] = outOfStockMessage;
+                return IsAjaxRequest()
+                    ? Json(new { message = outOfStockMessage, count = GetCartQuantity(GetCart()) })
+                    : RedirectToLocalCartTarget(returnUrl);
             }
 
             var cart = GetCart();
@@ -46,17 +69,21 @@ namespace SmartStore.Controllers
                 return RedirectToLocalCartTarget(returnUrl);
             }
 
-            var quantityToAdd = Math.Min(requestedQuantity, availableQuantity);
-            var item = cart.FirstOrDefault(i => i.ProductId == id);
+            var quantityToAdd = Math.Min(Math.Min(requestedQuantity, availableQuantity), variant.StockQuantity);
+            var item = cart.FirstOrDefault(i => i.ProductVariantId == productVariantId);
 
             if (item == null)
             {
                 cart.Add(new CartItem
                 {
-                    ProductId = product.Id,
-                    ProductName = product.Name,
-                    Price = product.Price,
-                    ImageUrl = product.ImageUrl,
+                    ProductId = variant.ProductId,
+                    ProductVariantId = variant.Id,
+                    ProductName = variant.Product.Name,
+                    SizeName = variant.Size.Name,
+                    ColorName = variant.Color.Name,
+                    Sku = variant.Sku,
+                    Price = variant.Price ?? variant.Product.Price,
+                    ImageUrl = GetMainImageUrl(variant.Product),
                     Quantity = quantityToAdd
                 });
             }
@@ -67,8 +94,8 @@ namespace SmartStore.Controllers
 
             SaveCart(cart);
             message = quantityToAdd < requestedQuantity
-                ? $"Đã thêm {quantityToAdd} sản phẩm. Giỏ hàng đã đạt giới hạn {MaxCartQuantity} sản phẩm."
-                : $"Đã thêm {product.Name} vào giỏ hàng.";
+                ? $"Đã thêm {quantityToAdd} sản phẩm. Giỏ hàng đã đạt giới hạn hoặc tồn kho hiện có."
+                : $"Đã thêm {variant.Product.Name} ({variant.Size.Name}/{variant.Color.Name}) vào giỏ hàng.";
             TempData["CartMessage"] = message;
 
             if (IsAjaxRequest())
@@ -84,7 +111,7 @@ namespace SmartStore.Controllers
         public IActionResult Update(int id, int quantity)
         {
             var cart = GetCart();
-            var item = cart.FirstOrDefault(i => i.ProductId == id);
+            var item = cart.FirstOrDefault(i => i.ProductVariantId == id);
             var message = string.Empty;
 
             if (item != null)
@@ -96,7 +123,7 @@ namespace SmartStore.Controllers
                 }
                 else
                 {
-                    var otherItemsTotal = cart.Where(cartItem => cartItem.ProductId != id).Sum(cartItem => cartItem.Quantity);
+                    var otherItemsTotal = cart.Where(cartItem => cartItem.ProductVariantId != id).Sum(cartItem => cartItem.Quantity);
                     var maxAllowedForItem = Math.Max(MaxCartQuantity - otherItemsTotal, 0);
                     item.Quantity = Math.Min(quantity, maxAllowedForItem);
 
@@ -130,7 +157,7 @@ namespace SmartStore.Controllers
         public IActionResult Increase(int id)
         {
             var cart = GetCart();
-            var item = cart.FirstOrDefault(i => i.ProductId == id);
+            var item = cart.FirstOrDefault(i => i.ProductVariantId == id);
             var message = string.Empty;
 
             if (item != null)
@@ -162,7 +189,7 @@ namespace SmartStore.Controllers
         public IActionResult Decrease(int id)
         {
             var cart = GetCart();
-            var item = cart.FirstOrDefault(i => i.ProductId == id);
+            var item = cart.FirstOrDefault(i => i.ProductVariantId == id);
 
             if (item != null)
             {
@@ -188,7 +215,7 @@ namespace SmartStore.Controllers
         public IActionResult Remove(int id)
         {
             var cart = GetCart();
-            var item = cart.FirstOrDefault(i => i.ProductId == id);
+            var item = cart.FirstOrDefault(i => i.ProductVariantId == id);
             var message = string.Empty;
 
             if (item != null)
@@ -246,19 +273,19 @@ namespace SmartStore.Controllers
             return cart.Sum(item => item.Quantity);
         }
 
-        private JsonResult CartJson(List<CartItem> cart, int changedProductId, string? message = null)
+        private JsonResult CartJson(List<CartItem> cart, int changedVariantId, string? message = null)
         {
             var subTotal = cart.Sum(item => item.LineTotal);
             var shippingFee = subTotal > 0 ? 30000 : 0;
             var discount = subTotal >= 500000 ? 50000 : 0;
             var total = subTotal + shippingFee - discount;
-            var changedItem = cart.FirstOrDefault(item => item.ProductId == changedProductId);
+            var changedItem = cart.FirstOrDefault(item => item.ProductVariantId == changedVariantId);
 
             return Json(new
             {
                 isEmpty = !cart.Any(),
                 count = GetCartQuantity(cart),
-                changedProductId,
+                changedProductId = changedVariantId,
                 message,
                 item = changedItem == null ? null : new
                 {
@@ -275,9 +302,19 @@ namespace SmartStore.Controllers
             });
         }
 
+        private static string GetMainImageUrl(Product product)
+        {
+            return product.ProductImages
+                .OrderByDescending(image => image.IsMain)
+                .ThenBy(image => image.DisplayOrder)
+                .Select(image => image.ImageUrl)
+                .FirstOrDefault()
+                ?? "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=900&q=80";
+        }
+
         private static string FormatCurrency(decimal value)
         {
-            return $"{value.ToString("N0", CultureInfo.InvariantCulture)} đ";
+            return $"{value.ToString("N0", CultureInfo.GetCultureInfo("vi-VN"))} ₫";
         }
     }
 }
