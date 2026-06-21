@@ -1,0 +1,27 @@
+@model OrderDetailsViewModel
+@{
+    ViewData["Title"] = "Đặt hàng thành công";
+}
+
+<section class="order-page">
+    <div class="container">
+        <div class="order-success-panel">
+            <span class="success-check"><i class="fa-solid fa-check"></i></span>
+            <span class="eyebrow dark">SmartStore đã nhận đơn hàng</span>
+            <h1>Đặt hàng thành công</h1>
+            <p>Cảm ơn bạn đã mua sắm. Cửa hàng sẽ sớm liên hệ để xác nhận và chuẩn bị sản phẩm.</p>
+            <div class="success-order-code">
+                <span>Mã đơn hàng</span>
+                <strong>@Model.OrderCode</strong>
+            </div>
+            <div class="success-actions">
+                <a class="btn btn-primary-custom" asp-action="Details" asp-route-id="@Model.Id">
+                    <i class="fa-solid fa-receipt"></i> Xem chi tiết đơn hàng
+                </a>
+                <a class="btn btn-outline-custom" asp-controller="Home" asp-action="Index" asp-fragment="san-pham">
+                    <i class="fa-solid fa-bag-shopping"></i> Tiếp tục mua sắm
+                </a>
+            </div>
+        </div>
+    </div>
+</section>

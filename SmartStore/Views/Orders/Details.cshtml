@@ -1,0 +1,124 @@
+@model OrderDetailsViewModel
+@{
+    ViewData["Title"] = "Chi tiết đơn hàng";
+    var timeline = new[] { OrderStatus.ChoXacNhan, OrderStatus.DaXacNhan, OrderStatus.DangGiao, OrderStatus.HoanThanh };
+}
+
+<section class="order-page">
+    <div class="container">
+        <nav class="breadcrumb-line" aria-label="Điều hướng">
+            <a asp-controller="Home" asp-action="Index">Trang chủ</a><span>/</span>
+            <a asp-action="@(Model.IsAdmin ? "AdminIndex" : "MyOrders")">@(Model.IsAdmin ? "Quản lý đơn hàng" : "Đơn hàng của tôi")</a><span>/</span>
+            <strong>Chi tiết đơn hàng</strong>
+        </nav>
+
+        <div class="order-page-heading details-heading">
+            <div>
+                <span class="eyebrow dark"><i class="fa-solid fa-receipt"></i> @Model.OrderCode</span>
+                <h1>Chi tiết đơn hàng</h1>
+                <p>Đặt lúc @Model.CreatedAt.ToString("HH:mm, dd/MM/yyyy")</p>
+            </div>
+            <span class="order-status order-status-large @OrderDisplay.StatusClass(Model.OrderStatus)">@OrderDisplay.Status(Model.OrderStatus)</span>
+        </div>
+
+        @if (TempData["OrderMessage"] != null)
+        {
+            <div class="alert cart-alert" role="alert">
+                <i class="fa-solid fa-circle-info"></i><span>@TempData["OrderMessage"]</span>
+                <button type="button" class="alert-close" aria-label="Đóng thông báo"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+        }
+
+        <div class="order-timeline-panel">
+            @if (Model.OrderStatus == OrderStatus.DaHuy)
+            {
+                <div class="timeline-canceled"><i class="fa-solid fa-circle-xmark"></i><div><strong>Đơn hàng đã hủy</strong><span>@Model.CanceledAt?.ToString("HH:mm, dd/MM/yyyy")</span></div></div>
+            }
+            else
+            {
+                <div class="order-timeline">
+                    @foreach (var step in timeline)
+                    {
+                        var reached = OrderDisplay.HasReached(Model.OrderStatus, step);
+                        <div class="timeline-step @(reached ? "is-reached" : "")">
+                            <span><i class="fa-solid @(reached ? "fa-check" : "fa-circle")"></i></span>
+                            <strong>@OrderDisplay.Status(step)</strong>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+
+        <div class="order-details-grid">
+            <div class="order-main-column">
+                <section class="order-info-panel">
+                    <div class="order-panel-heading compact"><span class="order-panel-icon"><i class="fa-solid fa-shirt"></i></span><div><h2>Sản phẩm đã đặt</h2><p>@Model.Items.Sum(item => item.Quantity) sản phẩm</p></div></div>
+                    <div class="order-product-list">
+                        @foreach (var item in Model.Items)
+                        {
+                            <article class="order-product-row">
+                                <img src="@(item.ImageUrl ?? string.Empty)" alt="@item.ProductName" />
+                                <div class="order-product-info">
+                                    <strong>@item.ProductName</strong>
+                                    <span>Kích cỡ @item.SizeName / @item.ColorName</span>
+                                    <small>SKU: @item.Sku</small>
+                                </div>
+                                <div class="order-product-quantity"><span>Số lượng</span><strong>@item.Quantity</strong></div>
+                                <div class="order-product-total"><span>Thành tiền</span><strong>@UiFormat.Vnd(item.LineTotal)</strong><small>@UiFormat.Vnd(item.UnitPrice) / sản phẩm</small></div>
+                            </article>
+                        }
+                    </div>
+                </section>
+
+                <section class="order-info-panel customer-info-panel">
+                    <div class="order-panel-heading compact"><span class="order-panel-icon"><i class="fa-solid fa-user"></i></span><div><h2>Thông tin nhận hàng</h2><p>Thông tin người nhận và địa chỉ giao hàng.</p></div></div>
+                    <dl class="customer-info-grid">
+                        <div><dt>Họ và tên</dt><dd>@Model.CustomerName</dd></div>
+                        <div><dt>Số điện thoại</dt><dd>@Model.PhoneNumber</dd></div>
+                        <div><dt>Email</dt><dd>@(Model.Email ?? "Không cung cấp")</dd></div>
+                        <div><dt>Địa chỉ nhận hàng</dt><dd>@Model.ShippingAddress</dd></div>
+                        <div class="customer-note"><dt>Ghi chú</dt><dd>@(Model.Note ?? "Không có ghi chú")</dd></div>
+                    </dl>
+                </section>
+            </div>
+
+            <aside class="order-side-column">
+                <section class="order-info-panel order-total-panel">
+                    <h2>Thông tin thanh toán</h2>
+                    <div class="order-payment-method"><i class="fa-solid fa-wallet"></i><div><span>Phương thức thanh toán</span><strong>@OrderDisplay.Method(Model.PaymentMethod)</strong></div></div>
+                    <span class="payment-status @OrderDisplay.PaymentClass(Model.PaymentStatus)">@OrderDisplay.Payment(Model.PaymentStatus)</span>
+                    <div class="order-summary-lines">
+                        <div><span>Tạm tính</span><strong>@UiFormat.Vnd(Model.SubTotal)</strong></div>
+                        <div><span>Phí vận chuyển</span><strong>@UiFormat.Vnd(Model.ShippingFee)</strong></div>
+                        <div class="summary-discount"><span>Giảm giá</span><strong>-@UiFormat.Vnd(Model.Discount)</strong></div>
+                        <div class="order-summary-total"><span>Tổng cộng</span><strong>@UiFormat.Vnd(Model.Total)</strong></div>
+                    </div>
+                </section>
+
+                @if (Model.CanCancel)
+                {
+                    <form asp-action="Cancel" asp-route-id="@Model.Id" method="post" class="order-action-panel" onsubmit="return confirm('Bạn chắc chắn muốn hủy đơn hàng này?');">
+                        @Html.AntiForgeryToken()
+                        <button class="btn btn-outline-danger w-100" type="submit"><i class="fa-solid fa-ban"></i> Hủy đơn hàng</button>
+                        <p>Đơn chỉ có thể hủy khi đang chờ xác nhận.</p>
+                    </form>
+                }
+
+                @if (Model.IsAdmin && Model.AllowedNextStatuses.Count > 0)
+                {
+                    <form asp-action="UpdateStatus" asp-route-id="@Model.Id" method="post" class="order-action-panel admin-status-panel">
+                        @Html.AntiForgeryToken()
+                        <label for="newStatus">Cập nhật trạng thái</label>
+                        <select id="newStatus" name="newStatus" class="form-select">
+                            @foreach (var status in Model.AllowedNextStatuses)
+                            {
+                                <option value="@status">@OrderDisplay.Status(status)</option>
+                            }
+                        </select>
+                        <button class="btn btn-primary-custom w-100" type="submit"><i class="fa-solid fa-rotate"></i> Cập nhật trạng thái</button>
+                    </form>
+                }
+            </aside>
+        </div>
+    </div>
+</section>

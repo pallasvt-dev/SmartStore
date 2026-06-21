@@ -1,0 +1,120 @@
+@model CheckoutViewModel
+@{
+    ViewData["Title"] = "Thanh toán";
+}
+
+<section class="order-page checkout-page">
+    <div class="container">
+        <nav class="breadcrumb-line" aria-label="Điều hướng">
+            <a asp-controller="Home" asp-action="Index">Trang chủ</a>
+            <span>/</span>
+            <a asp-controller="Cart" asp-action="Index">Giỏ hàng</a>
+            <span>/</span>
+            <strong>Thanh toán</strong>
+        </nav>
+
+        <div class="order-page-heading">
+            <div>
+                <span class="eyebrow dark"><i class="fa-solid fa-lock"></i> Đặt hàng an toàn</span>
+                <h1>Thanh toán</h1>
+                <p>Kiểm tra sản phẩm và cung cấp thông tin nhận hàng.</p>
+            </div>
+        </div>
+
+        <form asp-action="Checkout" method="post" class="checkout-layout">
+            @Html.AntiForgeryToken()
+            <div class="checkout-form-panel">
+                <div class="order-panel-heading">
+                    <span class="order-panel-icon"><i class="fa-solid fa-location-dot"></i></span>
+                    <div>
+                        <h2>Thông tin nhận hàng</h2>
+                        <p>Vui lòng nhập chính xác để đơn hàng được giao thuận lợi.</p>
+                    </div>
+                </div>
+
+                <div asp-validation-summary="ModelOnly" class="order-validation" role="alert"></div>
+
+                <div class="checkout-fields">
+                    <div class="form-group-custom">
+                        <label asp-for="CustomerName">Họ và tên</label>
+                        <input asp-for="CustomerName" class="form-control" placeholder="Nguyễn Văn An" autocomplete="name" />
+                        <span asp-validation-for="CustomerName" class="text-danger"></span>
+                    </div>
+                    <div class="form-group-custom">
+                        <label asp-for="PhoneNumber">Số điện thoại</label>
+                        <input asp-for="PhoneNumber" class="form-control" placeholder="09xx xxx xxx" autocomplete="tel" />
+                        <span asp-validation-for="PhoneNumber" class="text-danger"></span>
+                    </div>
+                    <div class="form-group-custom checkout-field-wide">
+                        <label asp-for="Email">Email</label>
+                        <input asp-for="Email" class="form-control" placeholder="ten@gmail.com" autocomplete="email" />
+                        <span asp-validation-for="Email" class="text-danger"></span>
+                    </div>
+                    <div class="form-group-custom checkout-field-wide">
+                        <label asp-for="ShippingAddress">Địa chỉ nhận hàng</label>
+                        <textarea asp-for="ShippingAddress" class="form-control" rows="3" placeholder="Số nhà, đường, phường/xã, quận/huyện, tỉnh/thành phố" autocomplete="street-address"></textarea>
+                        <span asp-validation-for="ShippingAddress" class="text-danger"></span>
+                    </div>
+                    <div class="form-group-custom checkout-field-wide">
+                        <label asp-for="Note">Ghi chú đơn hàng</label>
+                        <textarea asp-for="Note" class="form-control" rows="3" placeholder="Thời gian nhận hàng hoặc lưu ý dành cho cửa hàng"></textarea>
+                        <span asp-validation-for="Note" class="text-danger"></span>
+                    </div>
+                </div>
+
+                <fieldset class="payment-methods">
+                    <legend>Phương thức thanh toán</legend>
+                    <label class="payment-method-card">
+                        <input asp-for="PaymentMethod" id="paymentCod" type="radio" value="COD" />
+                        <span class="payment-method-icon"><i class="fa-solid fa-money-bill-wave"></i></span>
+                        <span>
+                            <strong>Thanh toán khi nhận hàng</strong>
+                            <small>Thanh toán cho nhân viên giao hàng khi nhận sản phẩm.</small>
+                        </span>
+                    </label>
+                    <label class="payment-method-card">
+                        <input asp-for="PaymentMethod" id="paymentTransfer" type="radio" value="ChuyenKhoan" />
+                        <span class="payment-method-icon"><i class="fa-solid fa-building-columns"></i></span>
+                        <span>
+                            <strong>Chuyển khoản ngân hàng</strong>
+                            <small>Cửa hàng sẽ liên hệ và gửi thông tin chuyển khoản.</small>
+                        </span>
+                    </label>
+                    <span asp-validation-for="PaymentMethod" class="text-danger"></span>
+                </fieldset>
+            </div>
+
+            <aside class="checkout-summary-panel">
+                <h2>Tóm tắt đơn hàng</h2>
+                <div class="checkout-product-list">
+                    @foreach (var item in Model.Items)
+                    {
+                        <div class="checkout-product">
+                            <img src="@item.ImageUrl" alt="@item.ProductName" />
+                            <div>
+                                <strong>@item.ProductName</strong>
+                                <span>@item.SizeName / @item.ColorName · SL: @item.Quantity</span>
+                                <small>@item.Sku</small>
+                            </div>
+                            <b>@UiFormat.Vnd(item.LineTotal)</b>
+                        </div>
+                    }
+                </div>
+                <div class="order-summary-lines">
+                    <div><span>Tạm tính</span><strong>@UiFormat.Vnd(Model.SubTotal)</strong></div>
+                    <div><span>Phí vận chuyển</span><strong>@UiFormat.Vnd(Model.ShippingFee)</strong></div>
+                    <div class="summary-discount"><span>Giảm giá</span><strong>-@UiFormat.Vnd(Model.Discount)</strong></div>
+                    <div class="order-summary-total"><span>Tổng cộng</span><strong>@UiFormat.Vnd(Model.Total)</strong></div>
+                </div>
+                <button class="btn btn-primary-custom w-100 order-submit-btn" type="submit">
+                    <i class="fa-solid fa-circle-check"></i> Xác nhận đặt hàng
+                </button>
+                <p class="checkout-privacy"><i class="fa-solid fa-shield-halved"></i> Thông tin của bạn được bảo mật và chỉ dùng để xử lý đơn hàng.</p>
+            </aside>
+        </form>
+    </div>
+</section>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

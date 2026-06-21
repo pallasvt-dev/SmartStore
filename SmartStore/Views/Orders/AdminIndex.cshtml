@@ -1,0 +1,67 @@
+@model AdminOrderIndexViewModel
+@{
+    ViewData["Title"] = "Quản lý đơn hàng";
+}
+
+<section class="order-page admin-orders-page">
+    <div class="container">
+        <nav class="breadcrumb-line" aria-label="Điều hướng"><a asp-controller="Home" asp-action="Index">Trang chủ</a><span>/</span><strong>Quản lý đơn hàng</strong></nav>
+        <div class="order-page-heading">
+            <div><span class="eyebrow dark"><i class="fa-solid fa-clipboard-list"></i> Khu vực quản trị</span><h1>Quản lý đơn hàng</h1><p>Theo dõi tiến độ xử lý và doanh thu của cửa hàng.</p></div>
+        </div>
+
+        <div class="order-stat-grid">
+            <div class="order-stat"><span><i class="fa-solid fa-receipt"></i></span><div><small>Tổng đơn hàng</small><strong>@Model.TotalOrders</strong></div></div>
+            <div class="order-stat revenue-stat"><span><i class="fa-solid fa-chart-line"></i></span><div><small>Doanh thu hoàn thành</small><strong>@UiFormat.Vnd(Model.CompletedRevenue)</strong></div></div>
+            <div class="order-stat"><span><i class="fa-solid fa-filter"></i></span><div><small>Kết quả đang hiển thị</small><strong>@Model.Items.Count</strong></div></div>
+        </div>
+
+        <form asp-action="AdminIndex" method="get" class="order-filter-panel">
+            <div class="filter-search"><label for="search">Tìm đơn hàng</label><div><i class="fa-solid fa-magnifying-glass"></i><input id="search" name="search" value="@Model.Search" class="form-control" placeholder="Mã đơn, khách hàng hoặc số điện thoại" /></div></div>
+            <div>
+                <label for="status">Trạng thái</label>
+                <select id="status" name="status" class="form-select">
+                    <option value="">Tất cả trạng thái</option>
+                    @foreach (var status in Enum.GetValues<OrderStatus>())
+                    {
+                        if (Model.Status == status)
+                        {
+                            <option value="@status" selected>@OrderDisplay.Status(status)</option>
+                        }
+                        else
+                        {
+                            <option value="@status">@OrderDisplay.Status(status)</option>
+                        }
+                    }
+                </select>
+            </div>
+            <div><label for="orderDate">Ngày đặt</label><input id="orderDate" name="orderDate" type="date" value="@Model.OrderDate?.ToString("yyyy-MM-dd")" class="form-control" /></div>
+            <button class="btn btn-primary-custom" type="submit"><i class="fa-solid fa-filter"></i> Lọc</button>
+            <a class="btn btn-outline-custom" asp-action="AdminIndex" title="Xóa bộ lọc"><i class="fa-solid fa-rotate-left"></i></a>
+        </form>
+
+        <div class="order-table-wrap admin-order-table-wrap">
+            <table class="order-table">
+                <thead><tr><th>Mã đơn</th><th>Khách hàng</th><th>Ngày đặt</th><th>Tổng tiền</th><th>Trạng thái</th><th>Thanh toán</th><th>Thao tác</th></tr></thead>
+                <tbody>
+                    @if (Model.Items.Count == 0)
+                    {
+                        <tr><td colspan="7" class="table-empty-message">Không tìm thấy đơn hàng phù hợp.</td></tr>
+                    }
+                    @foreach (var order in Model.Items)
+                    {
+                        <tr>
+                            <td data-label="Mã đơn"><strong>@order.OrderCode</strong></td>
+                            <td data-label="Khách hàng"><strong>@order.CustomerName</strong><small class="table-subtext">@order.PhoneNumber</small></td>
+                            <td data-label="Ngày đặt">@order.CreatedAt.ToString("dd/MM/yyyy HH:mm")</td>
+                            <td data-label="Tổng tiền"><strong class="order-money">@UiFormat.Vnd(order.Total)</strong></td>
+                            <td data-label="Trạng thái"><span class="order-status @OrderDisplay.StatusClass(order.OrderStatus)">@OrderDisplay.Status(order.OrderStatus)</span></td>
+                            <td data-label="Thanh toán"><span class="payment-status @OrderDisplay.PaymentClass(order.PaymentStatus)">@OrderDisplay.Payment(order.PaymentStatus)</span></td>
+                            <td data-label="Thao tác"><a class="btn-icon order-view-btn" asp-action="Details" asp-route-id="@order.Id" title="Xem chi tiết" aria-label="Xem chi tiết @order.OrderCode"><i class="fa-solid fa-eye"></i></a></td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</section>

@@ -1,0 +1,80 @@
+@model List<OrderListItemViewModel>
+@{
+    ViewData["Title"] = "Đơn hàng của tôi";
+}
+
+<section class="order-page">
+    <div class="container">
+        <nav class="breadcrumb-line" aria-label="Điều hướng">
+            <a asp-controller="Home" asp-action="Index">Trang chủ</a>
+            <span>/</span>
+            <strong>Đơn hàng của tôi</strong>
+        </nav>
+        <div class="order-page-heading">
+            <div>
+                <span class="eyebrow dark"><i class="fa-solid fa-receipt"></i> Lịch sử mua sắm</span>
+                <h1>Đơn hàng của tôi</h1>
+                <p>Theo dõi trạng thái và xem lại thông tin từng đơn hàng.</p>
+            </div>
+        </div>
+
+        @if (TempData["OrderMessage"] != null)
+        {
+            <div class="alert cart-alert" role="alert">
+                <i class="fa-solid fa-circle-check"></i><span>@TempData["OrderMessage"]</span>
+                <button type="button" class="alert-close" aria-label="Đóng thông báo"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+        }
+
+        @if (Model.Count == 0)
+        {
+            <div class="order-empty-panel">
+                <span><i class="fa-solid fa-box-open"></i></span>
+                <h2>Bạn chưa có đơn hàng nào</h2>
+                <p>Khám phá bộ sưu tập thời trang và chọn sản phẩm phù hợp với bạn.</p>
+                <a class="btn btn-primary-custom" asp-controller="Home" asp-action="Index" asp-fragment="san-pham">Mua sắm ngay</a>
+            </div>
+        }
+        else
+        {
+            <div class="order-table-wrap">
+                <table class="order-table">
+                    <thead>
+                        <tr>
+                            <th>Mã đơn</th>
+                            <th>Ngày đặt</th>
+                            <th>Tổng tiền</th>
+                            <th>Trạng thái</th>
+                            <th>Thanh toán</th>
+                            <th>Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var order in Model)
+                        {
+                            <tr>
+                                <td data-label="Mã đơn"><strong>@order.OrderCode</strong></td>
+                                <td data-label="Ngày đặt">@order.CreatedAt.ToString("dd/MM/yyyy HH:mm")</td>
+                                <td data-label="Tổng tiền"><strong class="order-money">@UiFormat.Vnd(order.Total)</strong></td>
+                                <td data-label="Trạng thái"><span class="order-status @OrderDisplay.StatusClass(order.OrderStatus)">@OrderDisplay.Status(order.OrderStatus)</span></td>
+                                <td data-label="Thanh toán"><span class="payment-status @OrderDisplay.PaymentClass(order.PaymentStatus)">@OrderDisplay.Payment(order.PaymentStatus)</span></td>
+                                <td data-label="Thao tác">
+                                    <div class="order-row-actions">
+                                        <a class="btn-icon order-view-btn" asp-action="Details" asp-route-id="@order.Id" title="Xem chi tiết" aria-label="Xem chi tiết @order.OrderCode"><i class="fa-solid fa-eye"></i></a>
+                                        @if (order.OrderStatus == OrderStatus.ChoXacNhan)
+                                        {
+                                            <form asp-action="Cancel" asp-route-id="@order.Id" method="post" onsubmit="return confirm('Bạn chắc chắn muốn hủy đơn hàng này?');">
+                                                @Html.AntiForgeryToken()
+                                                <button class="btn-icon order-cancel-btn" type="submit" title="Hủy đơn" aria-label="Hủy đơn @order.OrderCode"><i class="fa-solid fa-ban"></i></button>
+                                            </form>
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</section>

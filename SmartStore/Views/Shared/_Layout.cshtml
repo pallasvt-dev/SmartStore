@@ -55,6 +55,20 @@
                                     <i class="fa-solid fa-boxes-stacked me-1"></i> Quản lý sản phẩm
                                 </a>
                             </li>
+                            <li class="nav-item">
+                                <a class="nav-link nav-link-admin" asp-controller="Orders" asp-action="AdminIndex">
+                                    <i class="fa-solid fa-clipboard-list me-1"></i> Quản lý đơn hàng
+                                </a>
+                            </li>
+                        }
+
+                        @if (isCustomer)
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link" asp-controller="Orders" asp-action="MyOrders">
+                                    <i class="fa-solid fa-receipt me-1"></i> Đơn hàng của tôi
+                                </a>
+                            </li>
                         }
 
                         @if (isLoggedIn)
@@ -130,9 +144,14 @@
                 {
                     <a asp-controller="Cart" asp-action="Index">Giỏ hàng</a>
                 }
+                @if (isCustomer)
+                {
+                    <a asp-controller="Orders" asp-action="MyOrders">Đơn hàng của tôi</a>
+                }
                 @if (isAdmin)
                 {
                     <a asp-controller="Products" asp-action="Index">Quản lý sản phẩm</a>
+                    <a asp-controller="Orders" asp-action="AdminIndex">Quản lý đơn hàng</a>
                 }
                 <a asp-controller="Home" asp-action="Contact">Liên hệ</a>
             </div>

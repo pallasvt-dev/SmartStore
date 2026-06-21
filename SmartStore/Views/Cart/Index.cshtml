@@ -124,9 +124,12 @@
                         <strong class="js-summary-total">@UiFormat.Vnd(Model.Total)</strong>
                     </div>
 
-                    <button class="btn btn-primary-custom w-100" type="button">
-                        <i class="fa-solid fa-credit-card me-1"></i> Thanh toán
-                    </button>
+                    @if (User.IsInRole(AppRoles.Customer))
+                    {
+                        <a class="btn btn-primary-custom w-100" asp-controller="Orders" asp-action="Checkout">
+                            <i class="fa-solid fa-credit-card me-1"></i> Thanh toán
+                        </a>
+                    }
 
                     <form asp-controller="Cart" asp-action="Clear" method="post" class="clear-cart-form">
                         @Html.AntiForgeryToken()
