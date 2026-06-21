@@ -67,6 +67,7 @@ const initializePage = (root = document) => {
     setupProductGallery(root);
     setupCartActionForms(root);
     setupCartQuantityInputs(root);
+    setupWishlistForms(root);
 
     const addToCartForms = root.querySelectorAll(".add-cart-form, .detail-cart-form");
     addToCartForms.forEach((form) => {
@@ -107,6 +108,62 @@ const initializePage = (root = document) => {
                 }
             } catch {
                 HTMLFormElement.prototype.submit.call(form);
+            }
+        });
+    });
+};
+
+const setupWishlistForms = (root = document) => {
+    root.querySelectorAll(".js-wishlist-toggle-form").forEach((form) => {
+        if (form.dataset.wishlistReady === "true") {
+            return;
+        }
+
+        form.dataset.wishlistReady = "true";
+        form.addEventListener("submit", async (event) => {
+            event.preventDefault();
+            const button = form.querySelector("button");
+            if (!button || button.disabled) {
+                return;
+            }
+
+            button.disabled = true;
+            try {
+                const response = await fetch(form.action, {
+                    method: "POST",
+                    body: new FormData(form),
+                    headers: { "X-Requested-With": "XMLHttpRequest" }
+                });
+
+                if (!response.ok) {
+                    HTMLFormElement.prototype.submit.call(form);
+                    return;
+                }
+
+                const data = await response.json();
+                const productId = form.dataset.productId;
+                document.querySelectorAll(`.js-wishlist-toggle-form[data-product-id="${productId}"]`).forEach((relatedForm) => {
+                    const relatedButton = relatedForm.querySelector("button");
+                    const icon = relatedButton?.querySelector("i");
+                    const label = relatedButton?.querySelector("span");
+                    relatedButton?.classList.toggle("active", data.isFavorite === true);
+                    if (icon) {
+                        icon.classList.toggle("fa-solid", data.isFavorite === true);
+                        icon.classList.toggle("fa-regular", data.isFavorite !== true);
+                    }
+                    if (label) {
+                        label.textContent = data.isFavorite ? "Đã yêu thích" : "Thêm vào yêu thích";
+                    }
+                    const accessibleLabel = data.isFavorite ? "Bỏ yêu thích" : "Thêm vào yêu thích";
+                    relatedButton?.setAttribute("aria-label", accessibleLabel);
+                    relatedButton?.setAttribute("title", accessibleLabel);
+                });
+
+                showAlert(null, data.message);
+            } catch {
+                HTMLFormElement.prototype.submit.call(form);
+            } finally {
+                button.disabled = false;
             }
         });
     });
