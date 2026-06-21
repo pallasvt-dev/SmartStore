@@ -46,7 +46,6 @@ namespace SmartStore.Controllers
             {
                 MainImageUrl = "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=900&q=80",
                 Badge = "New",
-                Rating = 4.8,
                 Variants =
                 {
                     new ProductVariantInputModel { StockQuantity = 5 }
@@ -248,7 +247,6 @@ namespace SmartStore.Controllers
                 Price = product.Price,
                 OldPrice = product.OldPrice,
                 Badge = product.Badge,
-                Rating = product.Rating,
                 CategoryId = product.CategoryId,
                 BrandId = product.BrandId,
                 MainImageUrl = mainImage?.ImageUrl ?? string.Empty,
@@ -280,7 +278,6 @@ namespace SmartStore.Controllers
             product.Price = model.Price;
             product.OldPrice = model.OldPrice;
             product.Badge = string.IsNullOrWhiteSpace(model.Badge) ? null : model.Badge.Trim();
-            product.Rating = model.Rating;
             product.CategoryId = model.CategoryId;
             product.BrandId = model.BrandId;
             product.IsActive = true;

@@ -33,9 +33,6 @@ namespace SmartStore.Models
         [StringLength(30, ErrorMessage = "Nhãn hiển thị không được vượt quá 30 ký tự")]
         public string? Badge { get; set; }
 
-        [Range(0, 5, ErrorMessage = "Đánh giá phải từ 0 đến 5")]
-        public double Rating { get; set; } = 4.8;
-
         [Range(1, int.MaxValue, ErrorMessage = "Vui lòng chọn danh mục")]
         public int CategoryId { get; set; }
 
