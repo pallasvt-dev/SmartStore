@@ -7,35 +7,51 @@ namespace SmartStore.Models
         public int Id { get; set; }
 
         [Required(ErrorMessage = "Vui lòng nhập tên sản phẩm")]
-        [StringLength(120, ErrorMessage = "Tên sản phẩm tối đa 120 ký tự")]
+        [StringLength(150, ErrorMessage = "Tên sản phẩm không được vượt quá 150 ký tự")]
         public string Name { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "Vui lòng nhập danh mục")]
-        [StringLength(80, ErrorMessage = "Danh mục tối đa 80 ký tự")]
-        public string Category { get; set; } = string.Empty;
+        [StringLength(180, ErrorMessage = "Đường dẫn thân thiện không được vượt quá 180 ký tự")]
+        public string Slug { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "Vui lòng nhập mô tả sản phẩm")]
-        [StringLength(500, ErrorMessage = "Mô tả tối đa 500 ký tự")]
+        [StringLength(1000, ErrorMessage = "Mô tả không được vượt quá 1000 ký tự")]
         public string Description { get; set; } = string.Empty;
 
-        [Range(1000, 1000000000, ErrorMessage = "Giá bán phải từ 1,000 VND đến 1,000,000,000 VND")]
+        [StringLength(100, ErrorMessage = "Chất liệu không được vượt quá 100 ký tự")]
+        public string? Material { get; set; }
+
+        [StringLength(30, ErrorMessage = "Giới tính không được vượt quá 30 ký tự")]
+        public string? Gender { get; set; }
+
+        [Range(1000, 1000000000, ErrorMessage = "Giá bán phải từ 1.000 ₫ đến 1.000.000.000 ₫")]
         public decimal Price { get; set; }
 
-        [Range(0, 1000000000, ErrorMessage = "Giá cũ không được vượt quá 1,000,000,000 VND")]
+        [Range(0, 1000000000, ErrorMessage = "Giá gốc không được vượt quá 1.000.000.000 ₫")]
         public decimal? OldPrice { get; set; }
 
-        [Required(ErrorMessage = "Vui lòng thêm hình ảnh sản phẩm")]
-        [StringLength(6000000, ErrorMessage = "Dung lượng hình ảnh quá lớn")]
-        public string ImageUrl { get; set; } = string.Empty;
-
-        [StringLength(30, ErrorMessage = "Nhãn hiển thị tối đa 30 ký tự")]
-        public string Badge { get; set; } = string.Empty;
+        [StringLength(30, ErrorMessage = "Nhãn hiển thị không được vượt quá 30 ký tự")]
+        public string? Badge { get; set; }
 
         [Range(0, 5, ErrorMessage = "Đánh giá phải từ 0 đến 5")]
         public double Rating { get; set; }
 
-        [Required(ErrorMessage = "Vui lòng nhập trạng thái kho")]
-        [StringLength(60, ErrorMessage = "Trạng thái kho tối đa 60 ký tự")]
-        public string StockStatus { get; set; } = string.Empty;
+        public bool IsActive { get; set; } = true;
+
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+        public DateTime? UpdatedAt { get; set; }
+
+        [Range(1, int.MaxValue, ErrorMessage = "Vui lòng chọn danh mục")]
+        public int CategoryId { get; set; }
+
+        public Category Category { get; set; } = null!;
+
+        public int? BrandId { get; set; }
+
+        public Brand? Brand { get; set; }
+
+        public ICollection<ProductVariant> ProductVariants { get; set; } = new List<ProductVariant>();
+
+        public ICollection<ProductImage> ProductImages { get; set; } = new List<ProductImage>();
     }
 }

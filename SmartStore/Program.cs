@@ -83,6 +83,7 @@ namespace SmartStore
             }
 
             await IdentitySeeder.SeedAsync(app.Services);
+            await FashionCatalogSeeder.SeedAsync(app.Services);
 
             app.Run();
         }
