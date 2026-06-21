@@ -33,5 +33,7 @@ namespace SmartStore.Models
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
         public ICollection<CartItemEntity> CartItems { get; set; } = new List<CartItemEntity>();
+
+        public ICollection<OrderItem> OrderItems { get; set; } = new List<OrderItem>();
     }
 }

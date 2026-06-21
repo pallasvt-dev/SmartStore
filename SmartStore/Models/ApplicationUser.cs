@@ -7,5 +7,7 @@ namespace SmartStore.Models
         public string FullName { get; set; } = string.Empty;
 
         public ShoppingCart? ShoppingCart { get; set; }
+
+        public ICollection<Order> Orders { get; set; } = new List<Order>();
     }
 }

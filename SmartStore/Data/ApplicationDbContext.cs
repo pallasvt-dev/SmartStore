@@ -29,6 +29,10 @@ namespace SmartStore.Data
 
         public DbSet<CartItemEntity> CartItemEntities => Set<CartItemEntity>();
 
+        public DbSet<Order> Orders => Set<Order>();
+
+        public DbSet<OrderItem> OrderItems => Set<OrderItem>();
+
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);
@@ -144,6 +148,50 @@ namespace SmartStore.Data
 
                 entity.HasOne(item => item.ProductVariant)
                     .WithMany(variant => variant.CartItems)
+                    .HasForeignKey(item => item.ProductVariantId)
+                    .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            builder.Entity<Order>(entity =>
+            {
+                entity.HasIndex(order => order.OrderCode).IsUnique();
+                entity.Property(order => order.OrderCode).HasMaxLength(30).IsRequired();
+                entity.Property(order => order.UserId).IsRequired();
+                entity.Property(order => order.CustomerName).HasMaxLength(120).IsRequired();
+                entity.Property(order => order.PhoneNumber).HasMaxLength(20).IsRequired();
+                entity.Property(order => order.Email).HasMaxLength(120);
+                entity.Property(order => order.ShippingAddress).HasMaxLength(300).IsRequired();
+                entity.Property(order => order.Note).HasMaxLength(500);
+                entity.Property(order => order.SubTotal).HasColumnType("decimal(18,2)");
+                entity.Property(order => order.ShippingFee).HasColumnType("decimal(18,2)");
+                entity.Property(order => order.Discount).HasColumnType("decimal(18,2)");
+                entity.Property(order => order.Total).HasColumnType("decimal(18,2)");
+                entity.Property(order => order.OrderStatus).HasConversion<string>().HasMaxLength(30).IsRequired();
+                entity.Property(order => order.PaymentMethod).HasConversion<string>().HasMaxLength(30).IsRequired();
+                entity.Property(order => order.PaymentStatus).HasConversion<string>().HasMaxLength(30).IsRequired();
+
+                entity.HasOne(order => order.User)
+                    .WithMany(user => user.Orders)
+                    .HasForeignKey(order => order.UserId)
+                    .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            builder.Entity<OrderItem>(entity =>
+            {
+                entity.Property(item => item.ProductName).HasMaxLength(150).IsRequired();
+                entity.Property(item => item.SizeName).HasMaxLength(50).IsRequired();
+                entity.Property(item => item.ColorName).HasMaxLength(50).IsRequired();
+                entity.Property(item => item.Sku).HasMaxLength(80).IsRequired();
+                entity.Property(item => item.UnitPrice).HasColumnType("decimal(18,2)");
+                entity.Property(item => item.LineTotal).HasColumnType("decimal(18,2)");
+
+                entity.HasOne(item => item.Order)
+                    .WithMany(order => order.OrderItems)
+                    .HasForeignKey(item => item.OrderId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(item => item.ProductVariant)
+                    .WithMany(variant => variant.OrderItems)
                     .HasForeignKey(item => item.ProductVariantId)
                     .OnDelete(DeleteBehavior.Restrict);
             });
