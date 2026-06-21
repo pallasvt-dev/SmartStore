@@ -8,9 +8,10 @@
         <div class="admin-hero">
             <div>
                 <a class="back-link" asp-controller="Home" asp-action="Index"><i class="fa-solid fa-arrow-left"></i> Về trang bán hàng</a>
-                <span class="eyebrow dark"><i class="fa-solid fa-boxes-stacked"></i> Product</span>
+                <span class="eyebrow dark"><i class="fa-solid fa-shirt"></i> Danh mục thời trang</span>
+                <h1>Quản lý sản phẩm</h1>
             </div>
-            <a class="btn btn-primary-custom" asp-action="Create"><i class="fa-solid fa-plus me-1"></i> Thêm sản phẩm</a>
+            <a class="btn btn-primary-custom" asp-action="Create"><i class="fa-solid fa-plus me-1"></i> Thêm sản phẩm mới</a>
         </div>
 
         @if (TempData["ProductMessage"] != null)
@@ -27,12 +28,12 @@
                 <strong>@Model.Count()</strong>
             </div>
             <div class="admin-stat-card">
-                <span>Còn hàng</span>
-                <strong>@Model.Count(p => p.StockStatus.Contains("Còn"))</strong>
+                <span>Tổng biến thể</span>
+                <strong>@Model.Sum(p => p.ProductVariants.Count(v => v.IsActive))</strong>
             </div>
             <div class="admin-stat-card">
-                <span>Giá trung bình</span>
-                <strong>@(Model.Any() ? Model.Average(p => p.Price).ToString("N0") : "0") đ</strong>
+                <span>Tổng tồn kho</span>
+                <strong>@Model.Sum(p => p.ProductVariants.Where(v => v.IsActive).Sum(v => v.StockQuantity))</strong>
             </div>
         </div>
 
@@ -40,6 +41,7 @@
             <div class="admin-table-header">
                 <div>
                     <h2>Danh sách sản phẩm</h2>
+                    <p>Tìm theo tên sản phẩm, SKU, danh mục hoặc thương hiệu bằng công cụ tìm kiếm của trình duyệt.</p>
                 </div>
                 <a class="btn btn-outline-custom" asp-controller="Home" asp-action="Index"><i class="fa-solid fa-eye me-1"></i> Xem giao diện khách</a>
             </div>
@@ -50,40 +52,47 @@
                         <tr>
                             <th>Sản phẩm</th>
                             <th>Danh mục</th>
+                            <th>Thương hiệu</th>
                             <th>Giá bán</th>
-                            <th>Đánh giá</th>
-                            <th>Kho</th>
+                            <th>Tồn kho</th>
+                            <th>Biến thể</th>
+                            <th>Trạng thái</th>
                             <th class="text-end">Thao tác</th>
                         </tr>
                     </thead>
                     <tbody>
                         @foreach (var product in Model)
                         {
+                            var mainImage = product.ProductImages.OrderByDescending(i => i.IsMain).ThenBy(i => i.DisplayOrder).FirstOrDefault()?.ImageUrl;
+                            var totalStock = product.ProductVariants.Where(v => v.IsActive).Sum(v => v.StockQuantity);
+                            var variantCount = product.ProductVariants.Count(v => v.IsActive);
                             <tr>
                                 <td>
                                     <div class="admin-product-cell">
-                                        <img src="@product.ImageUrl" alt="@product.Name" />
+                                        <img src="@mainImage" alt="@product.Name" />
                                         <div>
                                             <strong>@product.Name</strong>
-                                            <span>@product.Badge</span>
+                                            <span>@(product.Badge ?? "Đang bán")</span>
                                         </div>
                                     </div>
                                 </td>
-                                <td><span class="admin-chip">@product.Category</span></td>
+                                <td><span class="admin-chip">@product.Category.Name</span></td>
+                                <td>@(product.Brand?.Name ?? "Chưa có")</td>
                                 <td>
-                                    <strong class="admin-price">@product.Price.ToString("N0") đ</strong>
+                                    <strong class="admin-price">@UiFormat.Vnd(product.Price)</strong>
                                     @if (product.OldPrice.HasValue)
                                     {
-                                        <del>@product.OldPrice.Value.ToString("N0") đ</del>
+                                        <del>@UiFormat.Vnd(product.OldPrice.Value)</del>
                                     }
                                 </td>
-                                <td><span class="rating"><i class="fa-solid fa-star"></i> @product.Rating</span></td>
-                                <td><span class="stock-pill">@product.StockStatus</span></td>
+                                <td><strong>@totalStock</strong></td>
+                                <td>@variantCount</td>
+                                <td><span class="stock-pill">@UiFormat.StockStatus(totalStock)</span></td>
                                 <td>
                                     <div class="admin-actions justify-content-end">
-                                        <a class="action-btn view" asp-action="Details" asp-route-id="@product.Id" title="Xem chi tiết"><i class="fa-solid fa-eye"></i></a>
-                                        <a class="action-btn edit" asp-action="Edit" asp-route-id="@product.Id" title="Sửa"><i class="fa-solid fa-pen"></i></a>
-                                        <a class="action-btn delete" asp-action="Delete" asp-route-id="@product.Id" title="Xóa"><i class="fa-solid fa-trash"></i></a>
+                                        <a class="action-btn view" asp-action="Details" asp-route-id="@product.Id" title="Chi tiết"><i class="fa-solid fa-eye"></i></a>
+                                        <a class="action-btn edit" asp-action="Edit" asp-route-id="@product.Id" title="Cập nhật"><i class="fa-solid fa-pen"></i></a>
+                                        <a class="action-btn delete" asp-action="Delete" asp-route-id="@product.Id" title="Ngừng bán"><i class="fa-solid fa-ban"></i></a>
                                     </div>
                                 </td>
                             </tr>

@@ -1,0 +1,191 @@
+@model SmartStore.Models.ProductFormViewModel
+@using Microsoft.AspNetCore.Mvc.Rendering
+
+<div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+<span asp-validation-for="Variants" class="text-danger"></span>
+
+<section class="form-section-card">
+    <h2>Thông tin cơ bản</h2>
+    <div class="form-grid-two">
+        <div class="form-group-custom">
+            <label asp-for="Name">Tên sản phẩm</label>
+            <input asp-for="Name" class="form-control" placeholder="Ví dụ: Áo thun basic cotton" />
+            <span asp-validation-for="Name" class="text-danger"></span>
+        </div>
+        <div class="form-group-custom">
+            <label asp-for="Slug">Đường dẫn thân thiện</label>
+            <input asp-for="Slug" class="form-control" placeholder="Tự động tạo nếu bỏ trống" />
+            <span asp-validation-for="Slug" class="text-danger"></span>
+        </div>
+    </div>
+
+    <div class="form-grid-two">
+        <div class="form-group-custom">
+            <label asp-for="CategoryId">Danh mục</label>
+            <select asp-for="CategoryId" asp-items="Model.Categories" class="form-control">
+                <option value="">Chọn danh mục</option>
+            </select>
+            <span asp-validation-for="CategoryId" class="text-danger"></span>
+        </div>
+        <div class="form-group-custom">
+            <label asp-for="BrandId">Thương hiệu</label>
+            <select asp-for="BrandId" asp-items="Model.Brands" class="form-control">
+                <option value="">Không chọn</option>
+            </select>
+            <span asp-validation-for="BrandId" class="text-danger"></span>
+        </div>
+    </div>
+
+    <div class="form-group-custom">
+        <label asp-for="Description">Mô tả sản phẩm</label>
+        <textarea asp-for="Description" class="form-control" rows="4" placeholder="Mô tả chất liệu, form dáng, công dụng và phong cách phối đồ..."></textarea>
+        <span asp-validation-for="Description" class="text-danger"></span>
+    </div>
+
+    <div class="form-grid-two">
+        <div class="form-group-custom">
+            <label asp-for="Material">Chất liệu</label>
+            <input asp-for="Material" class="form-control" placeholder="Cotton, linen, denim..." />
+            <span asp-validation-for="Material" class="text-danger"></span>
+        </div>
+        <div class="form-group-custom">
+            <label asp-for="Gender">Giới tính</label>
+            <select asp-for="Gender" class="form-control">
+                <option value="">Không chọn</option>
+                <option>Nam</option>
+                <option>Nữ</option>
+                <option>Unisex</option>
+            </select>
+            <span asp-validation-for="Gender" class="text-danger"></span>
+        </div>
+    </div>
+</section>
+
+<section class="form-section-card">
+    <h2>Giá bán</h2>
+    <div class="form-grid-two">
+        <div class="form-group-custom">
+            <label asp-for="Price">Giá bán</label>
+            <input id="Price" name="Price" value="@(Model.Price > 0 ? Model.Price.ToString("0") : "")" class="form-control js-vnd-input" type="text" inputmode="numeric" data-vnd-min="1000" data-vnd-max="1000000000" required data-val="false" />
+            <span asp-validation-for="Price" class="text-danger"></span>
+        </div>
+        <div class="form-group-custom">
+            <label asp-for="OldPrice">Giá gốc</label>
+            <input id="OldPrice" name="OldPrice" value="@(Model.OldPrice.HasValue ? Model.OldPrice.Value.ToString("0") : "")" class="form-control js-vnd-input" type="text" inputmode="numeric" data-vnd-min="0" data-vnd-max="1000000000" data-val="false" />
+            <span asp-validation-for="OldPrice" class="text-danger"></span>
+        </div>
+    </div>
+
+    <div class="form-grid-two">
+        <div class="form-group-custom">
+            <label asp-for="Badge">Nhãn hiển thị</label>
+            <input asp-for="Badge" class="form-control" placeholder="Mới, Hot, Sale..." />
+            <span asp-validation-for="Badge" class="text-danger"></span>
+        </div>
+        <div class="form-group-custom">
+            <label asp-for="Rating">Đánh giá</label>
+            <input asp-for="Rating" class="form-control" type="number" min="0" max="5" step="0.1" />
+            <span asp-validation-for="Rating" class="text-danger"></span>
+        </div>
+    </div>
+</section>
+
+<section class="form-section-card">
+    <h2>Hình ảnh</h2>
+    <div class="form-grid-two">
+        <div class="form-group-custom">
+            <label asp-for="MainImageUrl">Ảnh chính</label>
+            <input asp-for="MainImageUrl" type="hidden" class="js-image-value" />
+            <div class="image-paste-box js-image-paste-box" tabindex="0">
+                <img class="image-paste-preview js-image-preview" src="@Model.MainImageUrl" alt="Xem trước ảnh chính" />
+                <div class="image-paste-content">
+                    <strong>Dán hình ảnh vào đây</strong>
+                    <span>Copy ảnh rồi nhấn Ctrl + V hoặc chọn ảnh từ máy.</span>
+                    <button class="btn btn-outline-custom image-file-btn" type="button">Chọn ảnh</button>
+                    <input class="js-image-file visually-hidden" type="file" accept="image/*" />
+                </div>
+            </div>
+            <span asp-validation-for="MainImageUrl" class="text-danger"></span>
+        </div>
+        <div class="form-group-custom">
+            <label asp-for="ExtraImageUrls">Ảnh phụ</label>
+            <textarea asp-for="ExtraImageUrls" class="form-control" rows="8" placeholder="Mỗi dòng một URL ảnh phụ"></textarea>
+            <small>Có thể nhập nhiều URL, ngăn cách bằng xuống dòng, dấu phẩy hoặc dấu chấm phẩy.</small>
+        </div>
+    </div>
+</section>
+
+<section class="form-section-card variant-editor js-variant-editor">
+    <div class="admin-table-header">
+        <div>
+            <h2>Biến thể sản phẩm</h2>
+            <p>Quản lý kích cỡ, màu sắc, SKU, giá riêng và số lượng tồn kho.</p>
+        </div>
+        <button class="btn btn-outline-custom js-add-variant" type="button"><i class="fa-solid fa-plus me-1"></i> Thêm biến thể</button>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table product-admin-table align-middle js-variant-table">
+            <thead>
+                <tr>
+                    <th>Kích cỡ</th>
+                    <th>Màu sắc</th>
+                    <th>SKU</th>
+                    <th>Giá riêng</th>
+                    <th>Tồn kho</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @for (var i = 0; i < Model.Variants.Count; i++)
+                {
+                    <tr class="js-variant-row">
+                        <td>
+                            <input asp-for="Variants[i].Id" type="hidden" />
+                            <select asp-for="Variants[i].SizeId" asp-items="Model.Sizes" class="form-control">
+                                <option value="">Chọn kích cỡ</option>
+                            </select>
+                        </td>
+                        <td>
+                            <select asp-for="Variants[i].ColorId" asp-items="Model.Colors" class="form-control">
+                                <option value="">Chọn màu sắc</option>
+                            </select>
+                        </td>
+                        <td><input asp-for="Variants[i].Sku" class="form-control" placeholder="VD: AOTHUN-BASIC-TRANG-M" /></td>
+                        <td><input asp-for="Variants[i].Price" class="form-control" type="number" min="0" step="1000" /></td>
+                        <td><input asp-for="Variants[i].StockQuantity" class="form-control" type="number" min="0" /></td>
+                        <td><button class="remove-btn js-remove-variant" type="button" aria-label="Xóa biến thể"><i class="fa-solid fa-trash-can"></i></button></td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <template class="js-variant-template">
+        <tr class="js-variant-row">
+            <td>
+                <input name="Variants[__index__].Id" type="hidden" value="0" />
+                <select name="Variants[__index__].SizeId" class="form-control">
+                    <option value="">Chọn kích cỡ</option>
+                    @foreach (var option in Model.Sizes ?? Enumerable.Empty<SelectListItem>())
+                    {
+                        <option value="@option.Value">@option.Text</option>
+                    }
+                </select>
+            </td>
+            <td>
+                <select name="Variants[__index__].ColorId" class="form-control">
+                    <option value="">Chọn màu sắc</option>
+                    @foreach (var option in Model.Colors ?? Enumerable.Empty<SelectListItem>())
+                    {
+                        <option value="@option.Value">@option.Text</option>
+                    }
+                </select>
+            </td>
+            <td><input name="Variants[__index__].Sku" class="form-control" placeholder="VD: AOTHUN-BASIC-DEN-L" /></td>
+            <td><input name="Variants[__index__].Price" class="form-control" type="number" min="0" step="1000" /></td>
+            <td><input name="Variants[__index__].StockQuantity" class="form-control" type="number" min="0" value="0" /></td>
+            <td><button class="remove-btn js-remove-variant" type="button" aria-label="Xóa biến thể"><i class="fa-solid fa-trash-can"></i></button></td>
+        </tr>
+    </template>
+</section>

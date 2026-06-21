@@ -1,42 +1,85 @@
 @model SmartStore.Models.Product
 @{
     ViewData["Title"] = "Chi tiết sản phẩm";
+    var images = Model.ProductImages.OrderByDescending(i => i.IsMain).ThenBy(i => i.DisplayOrder).ToList();
+    var mainImage = images.FirstOrDefault()?.ImageUrl;
+    var variants = Model.ProductVariants.OrderBy(v => v.Size.DisplayOrder).ThenBy(v => v.Color.Name).ToList();
+    var totalStock = variants.Where(v => v.IsActive).Sum(v => v.StockQuantity);
 }
 
 <section class="admin-section">
     <div class="container narrow-container">
         <div class="admin-page-heading">
-            <a class="back-link" asp-action="Index"><i class="fa-solid fa-arrow-left"></i> Quay lại quản lý</a>
+            <a class="back-link" asp-action="Index"><i class="fa-solid fa-arrow-left"></i> Quay lại danh sách</a>
             <span class="eyebrow dark"><i class="fa-solid fa-eye"></i> Chi tiết</span>
             <h1>@Model.Name</h1>
         </div>
 
         <div class="admin-detail-card">
             <div class="admin-detail-image">
-                <span class="product-badge detail-badge">@Model.Badge</span>
-                <img src="@Model.ImageUrl" alt="@Model.Name" />
+                @if (!string.IsNullOrWhiteSpace(Model.Badge))
+                {
+                    <span class="product-badge detail-badge">@Model.Badge</span>
+                }
+                <img src="@mainImage" alt="@Model.Name" />
             </div>
             <div class="admin-detail-content">
-                <span class="admin-chip">@Model.Category</span>
+                <span class="admin-chip">@Model.Category.Name</span>
                 <h2>@Model.Name</h2>
                 <p>@Model.Description</p>
                 <div class="detail-price">
-                    <strong>@Model.Price.ToString("N0") đ</strong>
+                    <strong>@UiFormat.Vnd(Model.Price)</strong>
                     @if (Model.OldPrice.HasValue)
                     {
-                        <del>@Model.OldPrice.Value.ToString("N0") đ</del>
+                        <del>@UiFormat.Vnd(Model.OldPrice.Value)</del>
                     }
                 </div>
                 <div class="detail-info-grid">
                     <div><i class="fa-solid fa-star"></i><span>@Model.Rating/5</span></div>
-                    <div><i class="fa-solid fa-box-open"></i><span>@Model.StockStatus</span></div>
-                    <div><i class="fa-solid fa-hashtag"></i><span>ID: @Model.Id</span></div>
+                    <div><i class="fa-solid fa-box-open"></i><span>@UiFormat.StockStatus(totalStock) (@totalStock)</span></div>
+                    <div><i class="fa-solid fa-tag"></i><span>@(Model.Brand?.Name ?? "Chưa có thương hiệu")</span></div>
+                    <div><i class="fa-solid fa-shirt"></i><span>@Model.Material</span></div>
                 </div>
                 <div class="form-actions">
-                    <a class="btn btn-primary-custom" asp-action="Edit" asp-route-id="@Model.Id"><i class="fa-solid fa-pen me-1"></i> Sửa sản phẩm</a>
-                    <a class="btn btn-outline-custom" asp-action="Delete" asp-route-id="@Model.Id"><i class="fa-solid fa-trash me-1"></i> Xóa</a>
+                    <a class="btn btn-primary-custom" asp-action="Edit" asp-route-id="@Model.Id"><i class="fa-solid fa-pen me-1"></i> Cập nhật sản phẩm</a>
+                    <a class="btn btn-outline-custom" asp-action="Delete" asp-route-id="@Model.Id"><i class="fa-solid fa-ban me-1"></i> Ngừng bán</a>
                     <a class="btn btn-outline-custom" asp-controller="Home" asp-action="Details" asp-route-id="@Model.Id"><i class="fa-solid fa-store me-1"></i> Xem trang khách</a>
                 </div>
+            </div>
+        </div>
+
+        <div class="admin-table-card mt-4">
+            <div class="admin-table-header">
+                <h2>Biến thể sản phẩm</h2>
+            </div>
+            <div class="table-responsive">
+                <table class="table product-admin-table align-middle">
+                    <thead>
+                        <tr>
+                            <th>SKU</th>
+                            <th>Kích cỡ</th>
+                            <th>Màu sắc</th>
+                            <th>Giá riêng</th>
+                            <th>Tồn kho</th>
+                            <th>Trạng thái</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var variant in variants)
+                        {
+                            <tr>
+                                <td><strong>@variant.Sku</strong></td>
+                                <td>@variant.Size.Name</td>
+                                <td>
+                                    <span class="color-chip"><span style="background:@variant.Color.HexCode"></span>@variant.Color.Name</span>
+                                </td>
+                                <td>@(variant.Price.HasValue ? UiFormat.Vnd(variant.Price.Value) : "-")</td>
+                                <td>@variant.StockQuantity</td>
+                                <td>@(variant.IsActive ? "Đang bán" : "Đã ẩn")</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>

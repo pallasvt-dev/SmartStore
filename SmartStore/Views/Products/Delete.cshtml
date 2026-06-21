@@ -1,29 +1,32 @@
 @model SmartStore.Models.Product
 @{
-    ViewData["Title"] = "Xóa sản phẩm";
+    ViewData["Title"] = "Ngừng bán sản phẩm";
+    var mainImage = Model.ProductImages.OrderByDescending(i => i.IsMain).ThenBy(i => i.DisplayOrder).FirstOrDefault()?.ImageUrl;
+    var totalStock = Model.ProductVariants.Where(v => v.IsActive).Sum(v => v.StockQuantity);
 }
 
 <section class="admin-section">
     <div class="container narrow-container">
         <div class="admin-page-heading">
-            <a class="back-link" asp-action="Index"><i class="fa-solid fa-arrow-left"></i> Quay lại quản lý</a>
-            <span class="eyebrow danger"><i class="fa-solid fa-triangle-exclamation"></i> Xác nhận xóa</span>
-            <h1>Xóa sản phẩm</h1>
-            <p>Bạn có chắc chắn muốn xóa sản phẩm này khỏi danh sách bán hàng không?</p>
+            <a class="back-link" asp-action="Index"><i class="fa-solid fa-arrow-left"></i> Quay lại danh sách</a>
+            <span class="eyebrow danger"><i class="fa-solid fa-triangle-exclamation"></i> Xác nhận ngừng bán</span>
+            <h1>Ngừng bán sản phẩm</h1>
+            <p>Bạn có chắc chắn muốn ngừng bán sản phẩm này không?</p>
         </div>
 
         <div class="delete-card">
             <div class="admin-product-cell large">
-                <img src="@Model.ImageUrl" alt="@Model.Name" />
+                <img src="@mainImage" alt="@Model.Name" />
                 <div>
                     <strong>@Model.Name</strong>
-                    <span>@Model.Category • @Model.Price.ToString("N0") đ</span>
+                    <span>@Model.Category.Name - @(Model.Brand?.Name ?? "Chưa có thương hiệu") - @UiFormat.Vnd(Model.Price)</span>
+                    <span>Tồn kho: @totalStock</span>
                 </div>
             </div>
-            <p>Sau khi xóa, sản phẩm sẽ không còn xuất hiện trên trang chủ và trang quản lý trong phiên chạy hiện tại.</p>
+            <p>Sản phẩm sẽ được ẩn khỏi cửa hàng và danh sách quản lý mặc định. Dữ liệu vẫn được giữ lại để phục vụ đơn hàng sau này.</p>
             <form asp-action="Delete" asp-route-id="@Model.Id" method="post" class="form-actions">
                 @Html.AntiForgeryToken()
-                <button type="submit" class="btn btn-danger-custom"><i class="fa-solid fa-trash me-1"></i> Xóa sản phẩm</button>
+                <button type="submit" class="btn btn-danger-custom"><i class="fa-solid fa-ban me-1"></i> Ngừng bán</button>
                 <a class="btn btn-outline-custom" asp-action="Index">Hủy</a>
             </form>
         </div>

@@ -1,4 +1,4 @@
-// Please see documentation at https://learn.microsoft.com/aspnet/core/client-side/bundling-and-minification
+﻿// Please see documentation at https://learn.microsoft.com/aspnet/core/client-side/bundling-and-minification
 // for details on configuring this project to bundle and minify static web assets.
 
 // Write your JavaScript code.
@@ -62,6 +62,9 @@ const initializePage = (root = document) => {
     });
 
     imagePasteBoxes.forEach((box) => setupImagePasteBox(box));
+    setupProductVariantEditor(root);
+    setupProductDetailVariantPicker(root);
+    setupProductGallery(root);
     setupCartActionForms(root);
     setupCartQuantityInputs(root);
 
@@ -330,7 +333,7 @@ const dismissAlert = (alert) => {
 };
 
 const getVndDigits = (value) => {
-    const currencyValue = value.replace(/\s*VND\s*$/i, "").trim();
+    const currencyValue = value.replace(/\s*(VND|₫)\s*$/i, "").trim();
     const wholeNumber = currencyValue.includes(".") && !currencyValue.includes(",")
         ? currencyValue.split(".")[0]
         : currencyValue;
@@ -340,7 +343,7 @@ const getVndDigits = (value) => {
 
 const formatVndInput = (input) => {
     const digits = getVndDigits(input.value);
-    input.value = digits ? `${Number.parseInt(digits, 10).toLocaleString("en-US")} VND` : "";
+    input.value = digits ? `${Number.parseInt(digits, 10).toLocaleString("vi-VN")} ₫` : "";
     moveCaretBeforeVnd(input);
 };
 
@@ -362,12 +365,12 @@ const validateVndInput = (input) => {
     }
 
     if (min !== null && value < min) {
-        input.setCustomValidity(`Giá bán phải từ ${min.toLocaleString("en-US")} VND trở lên.`);
+        input.setCustomValidity(`Giá bán phải từ ${min.toLocaleString("vi-VN")} ₫ trở lên.`);
         return false;
     }
 
     if (max !== null && value > max) {
-        input.setCustomValidity(`Giá bán không được vượt quá ${max.toLocaleString("en-US")} VND.`);
+        input.setCustomValidity(`Giá bán không được vượt quá ${max.toLocaleString("vi-VN")} ₫.`);
         return false;
     }
 
@@ -376,12 +379,11 @@ const validateVndInput = (input) => {
 
 const moveCaretBeforeVnd = (input) => {
     window.requestAnimationFrame(() => {
-        const suffixStart = input.value.indexOf(" VND");
+        const suffixStart = input.value.indexOf(" ₫");
         const caretPosition = suffixStart === -1 ? input.value.length : suffixStart;
         input.setSelectionRange(caretPosition, caretPosition);
     });
 };
-
 const setupImagePasteBox = (box) => {
     if (box.dataset.imagePasteReady === "true") {
         return;
@@ -433,6 +435,171 @@ const setupImagePasteBox = (box) => {
 
     fileButton?.addEventListener("click", () => fileInput?.click());
     fileInput?.addEventListener("change", () => setImage(fileInput.files?.[0]));
+};
+
+const setupProductVariantEditor = (root = document) => {
+    const editors = root.querySelectorAll(".js-variant-editor");
+
+    editors.forEach((editor) => {
+        if (editor.dataset.variantEditorReady === "true") {
+            return;
+        }
+
+        const tableBody = editor.querySelector(".js-variant-table tbody");
+        const template = editor.querySelector(".js-variant-template");
+        const addButton = editor.querySelector(".js-add-variant");
+
+        if (!tableBody || !template || !addButton) {
+            return;
+        }
+
+        editor.dataset.variantEditorReady = "true";
+
+        const reindexRows = () => {
+            tableBody.querySelectorAll(".js-variant-row").forEach((row, index) => {
+                row.querySelectorAll("[name]").forEach((field) => {
+                    field.name = field.name.replace(/Variants\[\d+\]/, `Variants[${index}]`);
+                });
+            });
+        };
+
+        const bindRemoveButtons = () => {
+            tableBody.querySelectorAll(".js-remove-variant").forEach((button) => {
+                if (button.dataset.removeReady === "true") {
+                    return;
+                }
+
+                button.dataset.removeReady = "true";
+                button.addEventListener("click", () => {
+                    const rows = tableBody.querySelectorAll(".js-variant-row");
+                    if (rows.length <= 1) {
+                        const row = button.closest(".js-variant-row");
+                        row?.querySelectorAll("input, select").forEach((field) => {
+                            if (field.type !== "hidden") {
+                                field.value = "";
+                            }
+                        });
+                        return;
+                    }
+
+                    button.closest(".js-variant-row")?.remove();
+                    reindexRows();
+                });
+            });
+        };
+
+        addButton.addEventListener("click", () => {
+            const nextIndex = tableBody.querySelectorAll(".js-variant-row").length;
+            const html = template.innerHTML.replaceAll("__index__", nextIndex.toString());
+            tableBody.insertAdjacentHTML("beforeend", html);
+            bindRemoveButtons();
+        });
+
+        bindRemoveButtons();
+        reindexRows();
+    });
+};
+
+const setupProductDetailVariantPicker = (root = document) => {
+    const detailBlocks = root.querySelectorAll(".js-product-detail");
+
+    detailBlocks.forEach((block) => {
+        if (block.dataset.variantPickerReady === "true") {
+            return;
+        }
+
+        let variants = [];
+        try {
+            variants = JSON.parse(block.dataset.variants || "[]");
+        } catch {
+            variants = [];
+        }
+
+        const sizeSelect = block.querySelector(".js-size-select");
+        const colorSelect = block.querySelector(".js-color-select");
+        const variantInput = block.querySelector(".js-selected-variant");
+        const skuText = block.querySelector(".js-detail-sku");
+        const stockText = block.querySelector(".js-variant-stock");
+        const stockSummary = block.querySelector(".js-detail-stock");
+        const priceText = block.querySelector(".js-detail-price");
+        const addButton = block.querySelector(".js-add-selected-variant");
+
+        if (!sizeSelect || !colorSelect || !variantInput) {
+            return;
+        }
+
+        block.dataset.variantPickerReady = "true";
+
+        const syncPills = () => {
+            block.querySelectorAll(".js-size-pill").forEach((pill) => {
+                pill.classList.toggle("is-selected", pill.dataset.value === sizeSelect.value);
+            });
+            block.querySelectorAll(".js-color-pill").forEach((pill) => {
+                pill.classList.toggle("is-selected", pill.dataset.value === colorSelect.value);
+            });
+        };
+
+        const updateVariant = () => {
+            const sizeId = Number.parseInt(sizeSelect.value, 10);
+            const colorId = Number.parseInt(colorSelect.value, 10);
+            const selected = variants.find((variant) => variant.sizeId === sizeId && variant.colorId === colorId);
+
+            if (!selected) {
+                variantInput.value = "";
+                if (skuText) skuText.textContent = "-";
+                if (stockText) stockText.textContent = "0";
+                if (stockSummary) stockSummary.textContent = "Vui lòng chọn kích cỡ và màu sắc";
+                if (addButton) addButton.disabled = true;
+                syncPills();
+                return;
+            }
+
+            variantInput.value = selected.id;
+            if (skuText) skuText.textContent = selected.sku;
+            if (stockText) stockText.textContent = selected.stock;
+            if (stockSummary) stockSummary.textContent = selected.stock > 0 ? `Tồn kho: ${selected.stock}` : "Sản phẩm đã hết hàng";
+            if (priceText) priceText.textContent = selected.price;
+            if (addButton) addButton.disabled = selected.stock <= 0;
+            syncPills();
+        };
+
+        block.querySelectorAll(".js-size-pill").forEach((pill) => {
+            pill.addEventListener("click", () => {
+                sizeSelect.value = pill.dataset.value;
+                updateVariant();
+            });
+        });
+
+        block.querySelectorAll(".js-color-pill").forEach((pill) => {
+            pill.addEventListener("click", () => {
+                colorSelect.value = pill.dataset.value;
+                updateVariant();
+            });
+        });
+
+        sizeSelect.addEventListener("change", updateVariant);
+        colorSelect.addEventListener("change", updateVariant);
+        updateVariant();
+    });
+};
+const setupProductGallery = (root = document) => {
+    const thumbs = root.querySelectorAll(".js-gallery-thumb");
+
+    thumbs.forEach((thumb) => {
+        if (thumb.dataset.galleryReady === "true") {
+            return;
+        }
+
+        thumb.dataset.galleryReady = "true";
+        thumb.addEventListener("click", () => {
+            const gallery = thumb.closest(".product-gallery");
+            const mainImage = gallery?.querySelector(".js-gallery-main");
+            const imageUrl = thumb.dataset.imageUrl;
+            if (mainImage && imageUrl) {
+                mainImage.src = imageUrl;
+            }
+        });
+    });
 };
 
 const setupCartActionForms = (root = document) => {
@@ -621,3 +788,4 @@ const getToastContainer = () => {
 
     return container;
 };
+

@@ -4,6 +4,7 @@
     ViewData["Title"] = "Trang chủ";
     var products = Model.ToList();
     var featured = products.FirstOrDefault();
+    var featuredImage = featured?.ProductImages.OrderByDescending(i => i.IsMain).ThenBy(i => i.DisplayOrder).FirstOrDefault()?.ImageUrl;
     var isLoggedIn = User.Identity?.IsAuthenticated == true;
     var isAdmin = User.IsInRole(AppRoles.Admin);
     var returnUrl = $"{Context.Request.Path}{Context.Request.QueryString}#san-pham";
@@ -12,9 +13,9 @@
 <section class="hero-section">
     <div class="container hero-grid">
         <div class="hero-content">
-            <span class="eyebrow"><i class="fa-solid fa-star"></i> Bộ sưu tập mới</span>
-            <h1>Không gian mua sắm hiện đại</h1>
-            <p>Thiết kế tinh gọn, sản phẩm nổi bật và trải nghiệm mượt mà trên mọi màn hình.</p>
+            <span class="eyebrow"><i class="fa-solid fa-star"></i> Hàng mới về</span>
+            <h1>Khám phá phong cách mới cùng SmartStore</h1>
+            <p>Sản phẩm thời trang có kích cỡ, màu sắc, SKU và tồn kho rõ ràng theo từng biến thể.</p>
             <div class="hero-actions">
                 <a class="btn btn-primary-custom" href="#san-pham">Xem sản phẩm</a>
                 @if (isLoggedIn)
@@ -32,19 +33,19 @@
             </div>
             <div class="hero-stats">
                 <div><strong>@products.Count</strong><span>Sản phẩm</span></div>
-                <div><strong>4.9</strong><span>Đánh giá</span></div>
-                <div><strong>24h</strong><span>Hỗ trợ</span></div>
+                <div><strong>@products.Sum(p => p.ProductVariants.Count(v => v.IsActive))</strong><span>Biến thể</span></div>
+                <div><strong>@products.Sum(p => p.ProductVariants.Where(v => v.IsActive).Sum(v => v.StockQuantity))</strong><span>Tồn kho</span></div>
             </div>
         </div>
         <div class="hero-card">
             @if (featured != null)
             {
-                <span class="floating-badge">@featured.Badge</span>
-                <img src="@featured.ImageUrl" alt="@featured.Name" />
+                <span class="floating-badge">@(featured.Badge ?? "Mới")</span>
+                <img src="@featuredImage" alt="@featured.Name" />
                 <div class="hero-card-info">
                     <span>Sản phẩm nổi bật</span>
                     <h2>@featured.Name</h2>
-                    <p>@featured.Price.ToString("N0") đ</p>
+                    <p>@UiFormat.Vnd(featured.Price)</p>
                 </div>
             }
         </div>
@@ -66,80 +67,98 @@
 
     <div class="section-heading">
         <div>
-            <span class="eyebrow dark"><i class="fa-solid fa-layer-group"></i> Danh sách sản phẩm</span>
-            <h2>@products.Count sản phẩm nổi bật</h2>
+            <span class="eyebrow dark"><i class="fa-solid fa-layer-group"></i> Sản phẩm nổi bật</span>
+            <h2>@products.Count sản phẩm thời trang</h2>
         </div>
     </div>
 
-    <div class="shop-grid">
-        <div class="product-list">
-            @foreach (var product in products)
-            {
-                <article class="product-card">
-                    <a class="product-image" asp-controller="Home" asp-action="Details" asp-route-id="@product.Id" aria-label="Xem @product.Name">
-                        <span class="product-badge">@product.Badge</span>
-                        <img src="@product.ImageUrl" alt="@product.Name" />
-                    </a>
-                    <div class="product-body">
-                        <div class="product-meta">
-                            <span>@product.Category</span>
-                            <span class="rating"><i class="fa-solid fa-star"></i> @product.Rating</span>
-                        </div>
-                        <h3>@product.Name</h3>
-                        <p>@product.Description</p>
-                        <div class="price-row">
-                            <strong>@product.Price.ToString("N0") đ</strong>
-                            @if (product.OldPrice.HasValue)
-                            {
-                                <del>@product.OldPrice.Value.ToString("N0") đ</del>
-                            }
-                        </div>
-                        <div class="card-actions">
-                            <a class="btn-buy" asp-controller="Home" asp-action="Details" asp-route-id="@product.Id">Chi tiết</a>
-                            @if (isLoggedIn)
-                            {
-                                <form asp-controller="Cart" asp-action="Add" method="post" class="add-cart-form">
-                                    @Html.AntiForgeryToken()
-                                    <input type="hidden" name="id" value="@product.Id" />
-                                    <input type="hidden" name="quantity" value="1" />
-                                    <input type="hidden" name="returnUrl" value="@returnUrl" />
-                                    <button class="btn-icon" type="submit" aria-label="Thêm @product.Name vào giỏ hàng">
-                                        <i class="fa-solid fa-cart-plus"></i>
-                                    </button>
-                                </form>
-                            }
-                            else
-                            {
-                                <a class="btn-icon login-cart-link" asp-controller="Account" asp-action="Login" asp-route-returnUrl="@returnUrl" aria-label="Đăng nhập để thêm @product.Name vào giỏ hàng">
-                                    <i class="fa-solid fa-lock"></i>
-                                </a>
-                            }
-                        </div>
-                    </div>
-                </article>
-            }
+    @if (!products.Any())
+    {
+        <div class="empty-cart-card">
+            <div class="empty-cart-icon"><i class="fa-solid fa-shirt"></i></div>
+            <h2>Chưa có sản phẩm nào</h2>
+            <p>Vui lòng quay lại sau hoặc liên hệ cửa hàng để được hỗ trợ.</p>
         </div>
-
-        <aside class="sidebar">
-            <div class="sidebar-card social-card">
-                <h3>Social Media</h3>
-                <p>Theo dõi cửa hàng để nhận thông tin khuyến mãi mới.</p>
-                <a href="#"><i class="fa-brands fa-facebook-f"></i> Facebook</a>
-                <a href="#"><i class="fa-brands fa-x-twitter"></i> Twitter</a>
-                <a href="#"><i class="fa-brands fa-instagram"></i> Instagram</a>
-                <a href="#"><i class="fa-brands fa-linkedin-in"></i> LinkedIn</a>
+    }
+    else
+    {
+        <div class="shop-grid">
+            <div class="product-list">
+                @foreach (var product in products)
+                {
+                    var mainImage = product.ProductImages.OrderByDescending(i => i.IsMain).ThenBy(i => i.DisplayOrder).FirstOrDefault()?.ImageUrl;
+                    var activeVariants = product.ProductVariants.Where(v => v.IsActive).ToList();
+                    var totalStock = activeVariants.Sum(v => v.StockQuantity);
+                    var firstVariant = activeVariants.FirstOrDefault(v => v.StockQuantity > 0) ?? activeVariants.FirstOrDefault();
+                    <article class="product-card">
+                        <a class="product-image" asp-controller="Home" asp-action="Details" asp-route-id="@product.Id" aria-label="Xem @product.Name">
+                            <span class="product-badge">@(totalStock > 0 ? (product.Badge ?? "Còn hàng") : "Hết hàng")</span>
+                            <img src="@mainImage" alt="@product.Name" />
+                        </a>
+                        <div class="product-body">
+                            <div class="product-meta">
+                                <span>@product.Category.Name</span>
+                                <span class="rating"><i class="fa-solid fa-star"></i> @product.Rating</span>
+                            </div>
+                            <h3>@product.Name</h3>
+                            <p>@product.Description</p>
+                            <div class="price-row">
+                                <strong>@UiFormat.Vnd(product.Price)</strong>
+                                @if (product.OldPrice.HasValue)
+                                {
+                                    <del>@UiFormat.Vnd(product.OldPrice.Value)</del>
+                                }
+                            </div>
+                            <div class="product-description">
+                                <span>@(totalStock > 0 ? $"Còn hàng: {totalStock}" : "Hết hàng")</span>
+                                <span>@activeVariants.Count biến thể</span>
+                            </div>
+                            <div class="card-actions">
+                                <a class="btn-buy" asp-controller="Home" asp-action="Details" asp-route-id="@product.Id">Xem chi tiết</a>
+                                @if (isLoggedIn && firstVariant != null && totalStock > 0)
+                                {
+                                    <form asp-controller="Cart" asp-action="Add" method="post" class="add-cart-form">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="productVariantId" value="@firstVariant.Id" />
+                                        <input type="hidden" name="quantity" value="1" />
+                                        <input type="hidden" name="returnUrl" value="@returnUrl" />
+                                        <button class="btn-icon" type="submit" aria-label="Thêm @product.Name vào giỏ hàng">
+                                            <i class="fa-solid fa-cart-plus"></i>
+                                        </button>
+                                    </form>
+                                }
+                                else if (!isLoggedIn)
+                                {
+                                    <a class="btn-icon login-cart-link" asp-controller="Account" asp-action="Login" asp-route-returnUrl="@returnUrl" aria-label="Đăng nhập để thêm @product.Name vào giỏ hàng">
+                                        <i class="fa-solid fa-lock"></i>
+                                    </a>
+                                }
+                            </div>
+                        </div>
+                    </article>
+                }
             </div>
 
-            <div class="sidebar-card benefit-card">
-                <h3>Ưu điểm mua hàng</h3>
-                <ul>
-                    <li><i class="fa-solid fa-circle-check"></i> Sản phẩm chất lượng, giá cả hợp lý</li>
-                    <li><i class="fa-solid fa-circle-check"></i> Đăng nhập để thêm sản phẩm vào giỏ hàng</li>
-                    <li><i class="fa-solid fa-circle-check"></i> Hỗ trợ nhiều sản phẩm đa dạng</li>
-                    <li><i class="fa-solid fa-circle-check"></i> Giao diện mua sắm thân thiện, dễ sử dụng</li>
-                    <li><i class="fa-solid fa-circle-check"></i> Phù hợp trên cả máy tính và điện thoại</li>
-                </ul>
-            </div>
-        </aside>
-    </div>
+            <aside class="sidebar">
+                <div class="sidebar-card social-card">
+                    <h3>Theo dõi SmartStore</h3>
+                    <p>Nhận thông tin hàng mới, ưu đãi và gợi ý phối đồ theo mùa.</p>
+                    <a href="#"><i class="fa-brands fa-facebook-f"></i> Facebook</a>
+                    <a href="#"><i class="fa-brands fa-x-twitter"></i> X</a>
+                    <a href="#"><i class="fa-brands fa-instagram"></i> Instagram</a>
+                    <a href="#"><i class="fa-brands fa-linkedin-in"></i> LinkedIn</a>
+                </div>
+
+                <div class="sidebar-card benefit-card">
+                    <h3>Ưu điểm mua hàng</h3>
+                    <ul>
+                        <li><i class="fa-solid fa-circle-check"></i> Sản phẩm có kích cỡ và màu sắc rõ ràng</li>
+                        <li><i class="fa-solid fa-circle-check"></i> SKU riêng cho từng biến thể</li>
+                        <li><i class="fa-solid fa-circle-check"></i> Tồn kho tính theo từng kích cỡ và màu sắc</li>
+                        <li><i class="fa-solid fa-circle-check"></i> Giỏ hàng lưu đúng biến thể bạn chọn</li>
+                    </ul>
+                </div>
+            </aside>
+        </div>
+    }
 </section>
