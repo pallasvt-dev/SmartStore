@@ -25,6 +25,10 @@ namespace SmartStore.Data
 
         public DbSet<ProductImage> ProductImages => Set<ProductImage>();
 
+        public DbSet<ShoppingCart> ShoppingCarts => Set<ShoppingCart>();
+
+        public DbSet<CartItemEntity> CartItemEntities => Set<CartItemEntity>();
+
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);
@@ -115,6 +119,33 @@ namespace SmartStore.Data
                     .WithMany(product => product.ProductImages)
                     .HasForeignKey(image => image.ProductId)
                     .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            builder.Entity<ShoppingCart>(entity =>
+            {
+                entity.HasIndex(cart => cart.UserId).IsUnique();
+                entity.Property(cart => cart.UserId).IsRequired();
+
+                entity.HasOne(cart => cart.User)
+                    .WithOne(user => user.ShoppingCart)
+                    .HasForeignKey<ShoppingCart>(cart => cart.UserId)
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            builder.Entity<CartItemEntity>(entity =>
+            {
+                entity.HasIndex(item => new { item.ShoppingCartId, item.ProductVariantId }).IsUnique();
+                entity.Property(item => item.UnitPrice).HasColumnType("decimal(18,2)");
+
+                entity.HasOne(item => item.ShoppingCart)
+                    .WithMany(cart => cart.CartItems)
+                    .HasForeignKey(item => item.ShoppingCartId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(item => item.ProductVariant)
+                    .WithMany(variant => variant.CartItems)
+                    .HasForeignKey(item => item.ProductVariantId)
+                    .OnDelete(DeleteBehavior.Restrict);
             });
         }
     }
