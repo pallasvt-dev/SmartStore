@@ -42,5 +42,6 @@ namespace SmartStore.Models
         public DateTime? CompletedAt { get; set; }
         public DateTime? CanceledAt { get; set; }
         public ICollection<OrderItem> OrderItems { get; set; } = new List<OrderItem>();
+        public ICollection<ProductReview> ProductReviews { get; set; } = new List<ProductReview>();
     }
 }

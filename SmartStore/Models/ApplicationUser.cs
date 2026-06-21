@@ -9,5 +9,9 @@ namespace SmartStore.Models
         public ShoppingCart? ShoppingCart { get; set; }
 
         public ICollection<Order> Orders { get; set; } = new List<Order>();
+
+        public ICollection<WishlistItem> WishlistItems { get; set; } = new List<WishlistItem>();
+
+        public ICollection<ProductReview> ProductReviews { get; set; } = new List<ProductReview>();
     }
 }

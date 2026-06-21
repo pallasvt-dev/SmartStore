@@ -53,5 +53,13 @@ namespace SmartStore.Models
         public ICollection<ProductVariant> ProductVariants { get; set; } = new List<ProductVariant>();
 
         public ICollection<ProductImage> ProductImages { get; set; } = new List<ProductImage>();
+
+        public ICollection<WishlistItem> WishlistItems { get; set; } = new List<WishlistItem>();
+
+        public ICollection<ProductReview> ProductReviews { get; set; } = new List<ProductReview>();
+
+        public ICollection<OutfitSuggestion> OutfitSuggestions { get; set; } = new List<OutfitSuggestion>();
+
+        public ICollection<OutfitSuggestion> SuggestedInOutfits { get; set; } = new List<OutfitSuggestion>();
     }
 }

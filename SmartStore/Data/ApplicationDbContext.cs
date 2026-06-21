@@ -33,6 +33,14 @@ namespace SmartStore.Data
 
         public DbSet<OrderItem> OrderItems => Set<OrderItem>();
 
+        public DbSet<WishlistItem> WishlistItems => Set<WishlistItem>();
+
+        public DbSet<ProductReview> ProductReviews => Set<ProductReview>();
+
+        public DbSet<ProductReviewImage> ProductReviewImages => Set<ProductReviewImage>();
+
+        public DbSet<OutfitSuggestion> OutfitSuggestions => Set<OutfitSuggestion>();
+
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);
@@ -193,6 +201,77 @@ namespace SmartStore.Data
                 entity.HasOne(item => item.ProductVariant)
                     .WithMany(variant => variant.OrderItems)
                     .HasForeignKey(item => item.ProductVariantId)
+                    .OnDelete(DeleteBehavior.Restrict);
+            });
+
+            builder.Entity<WishlistItem>(entity =>
+            {
+                entity.HasIndex(item => new { item.UserId, item.ProductId }).IsUnique();
+                entity.Property(item => item.UserId).IsRequired();
+
+                entity.HasOne(item => item.User)
+                    .WithMany(user => user.WishlistItems)
+                    .HasForeignKey(item => item.UserId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(item => item.Product)
+                    .WithMany(product => product.WishlistItems)
+                    .HasForeignKey(item => item.ProductId)
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            builder.Entity<ProductReview>(entity =>
+            {
+                entity.HasIndex(review => new { review.UserId, review.ProductId }).IsUnique();
+                entity.ToTable(table => table.HasCheckConstraint("CK_ProductReviews_Rating", "[Rating] >= 1 AND [Rating] <= 5"));
+                entity.Property(review => review.UserId).IsRequired();
+                entity.Property(review => review.Comment).HasMaxLength(1000).IsRequired();
+                entity.Property(review => review.IsApproved).HasDefaultValue(true);
+
+                entity.HasOne(review => review.Product)
+                    .WithMany(product => product.ProductReviews)
+                    .HasForeignKey(review => review.ProductId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(review => review.User)
+                    .WithMany(user => user.ProductReviews)
+                    .HasForeignKey(review => review.UserId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(review => review.Order)
+                    .WithMany(order => order.ProductReviews)
+                    .HasForeignKey(review => review.OrderId)
+                    .OnDelete(DeleteBehavior.SetNull);
+            });
+
+            builder.Entity<ProductReviewImage>(entity =>
+            {
+                entity.Property(image => image.ImageUrl).HasMaxLength(2000).IsRequired();
+
+                entity.HasOne(image => image.ProductReview)
+                    .WithMany(review => review.Images)
+                    .HasForeignKey(image => image.ProductReviewId)
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            builder.Entity<OutfitSuggestion>(entity =>
+            {
+                entity.HasIndex(item => new { item.ProductId, item.SuggestedProductId }).IsUnique();
+                entity.ToTable(table => table.HasCheckConstraint(
+                    "CK_OutfitSuggestions_DifferentProducts",
+                    "[ProductId] <> [SuggestedProductId]"));
+                entity.Property(item => item.Title).HasMaxLength(120);
+                entity.Property(item => item.Note).HasMaxLength(300);
+                entity.Property(item => item.IsActive).HasDefaultValue(true);
+
+                entity.HasOne(item => item.Product)
+                    .WithMany(product => product.OutfitSuggestions)
+                    .HasForeignKey(item => item.ProductId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasOne(item => item.SuggestedProduct)
+                    .WithMany(product => product.SuggestedInOutfits)
+                    .HasForeignKey(item => item.SuggestedProductId)
                     .OnDelete(DeleteBehavior.Restrict);
             });
         }
