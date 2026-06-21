@@ -710,8 +710,8 @@ const updateCartUi = (data, cartPage) => {
         setText(".js-summary-total", data.summary.total);
     }
 
-    const productId = data.changedProductId?.toString();
-    const row = productId ? document.querySelector(`.js-cart-item[data-product-id="${productId}"]`) : null;
+    const cartItemId = data.changedCartItemId?.toString();
+    const row = cartItemId ? document.querySelector(`.js-cart-item[data-cart-item-id="${cartItemId}"]`) : null;
 
     if (data.item && row) {
         const quantityInput = row.querySelector(".js-cart-qty-input");

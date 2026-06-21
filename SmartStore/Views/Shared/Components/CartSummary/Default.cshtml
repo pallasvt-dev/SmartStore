@@ -1,9 +1,6 @@
-@model List<SmartStore.Models.CartItem>
-@{
-    var count = Model.Sum(item => item.Quantity);
-}
+@model int
 <a class="btn btn-nav cart-summary-btn" asp-controller="Cart" asp-action="Index" aria-label="Xem giỏ hàng">
     <i class="fa-solid fa-cart-shopping me-1"></i>
     Giỏ hàng
-    <span class="cart-count">@count</span>
+    <span class="cart-count">@Model</span>
 </a>

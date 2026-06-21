@@ -1,10 +1,6 @@
-@model List<SmartStore.Models.CartItem>
+@model CartViewModel
 @{
     ViewData["Title"] = "Giỏ hàng";
-    var subTotal = Model.Sum(item => item.LineTotal);
-    var shippingFee = subTotal > 0 ? 30000 : 0;
-    var discount = subTotal >= 500000 ? 50000 : 0;
-    var total = subTotal + shippingFee - discount;
 }
 
 <section class="cart-page">
@@ -36,7 +32,7 @@
             </div>
         }
 
-        @if (!Model.Any())
+        @if (Model.IsEmpty)
         {
             <div class="empty-cart-card">
                 <div class="empty-cart-icon"><i class="fa-solid fa-basket-shopping"></i></div>
@@ -49,9 +45,14 @@
         {
             <div class="cart-layout js-cart-page">
                 <div class="cart-list-card">
-                    @foreach (var item in Model)
+                    <div class="cart-list-heading" aria-hidden="true">
+                        <span>Sản phẩm</span>
+                        <span>Số lượng</span>
+                        <span>Thành tiền</span>
+                    </div>
+                    @foreach (var item in Model.Items)
                     {
-                        <article class="cart-item js-cart-item" data-product-id="@item.ProductVariantId">
+                        <article class="cart-item js-cart-item" data-cart-item-id="@item.CartItemId">
                             <a class="cart-item-image" asp-controller="Home" asp-action="Details" asp-route-id="@item.ProductId">
                                 <img src="@item.ImageUrl" alt="@item.ProductName" />
                             </a>
@@ -60,13 +61,14 @@
                                 <a class="cart-item-name" asp-controller="Home" asp-action="Details" asp-route-id="@item.ProductId">@item.ProductName</a>
                                 <span class="cart-item-price">Kích cỡ @item.SizeName / @item.ColorName</span>
                                 <span class="cart-item-price">SKU: @item.Sku</span>
-                                <span class="cart-item-price">Đơn giá: @UiFormat.Vnd(item.Price)</span>
+                                <span class="cart-item-price">Đơn giá: @UiFormat.Vnd(item.UnitPrice)</span>
+                                <span class="cart-item-price">Còn @item.StockQuantity sản phẩm</span>
                             </div>
 
                             <div class="cart-quantity-group">
                                 <form asp-controller="Cart" asp-action="Decrease" method="post" class="js-cart-action-form">
                                     @Html.AntiForgeryToken()
-                                    <input type="hidden" name="id" value="@item.ProductVariantId" />
+                                    <input type="hidden" name="cartItemId" value="@item.CartItemId" />
                                     <button class="qty-btn" type="submit" aria-label="Giảm số lượng">
                                         <i class="fa-solid fa-minus"></i>
                                     </button>
@@ -74,13 +76,13 @@
 
                                 <form asp-controller="Cart" asp-action="Update" method="post" class="quantity-update-form js-cart-action-form">
                                     @Html.AntiForgeryToken()
-                                    <input type="hidden" name="id" value="@item.ProductVariantId" />
-                                    <input class="cart-qty-input js-cart-qty-input" type="number" name="quantity" value="@item.Quantity" min="0" max="99" aria-label="Số lượng @item.ProductName" />
+                                    <input type="hidden" name="cartItemId" value="@item.CartItemId" />
+                                    <input class="cart-qty-input js-cart-qty-input" type="number" name="quantity" value="@item.Quantity" min="0" max="@Math.Min(item.StockQuantity, 20)" aria-label="Số lượng @item.ProductName" />
                                 </form>
 
                                 <form asp-controller="Cart" asp-action="Increase" method="post" class="js-cart-action-form">
                                     @Html.AntiForgeryToken()
-                                    <input type="hidden" name="id" value="@item.ProductVariantId" />
+                                    <input type="hidden" name="cartItemId" value="@item.CartItemId" />
                                     <button class="qty-btn" type="submit" aria-label="Tăng số lượng">
                                         <i class="fa-solid fa-plus"></i>
                                     </button>
@@ -94,7 +96,7 @@
 
                             <form asp-controller="Cart" asp-action="Remove" method="post" class="remove-form js-cart-action-form">
                                 @Html.AntiForgeryToken()
-                                <input type="hidden" name="id" value="@item.ProductVariantId" />
+                                <input type="hidden" name="cartItemId" value="@item.CartItemId" />
                                 <button class="remove-btn" type="submit" aria-label="Xóa @item.ProductName">
                                     <i class="fa-solid fa-trash-can"></i>
                                 </button>
@@ -107,19 +109,19 @@
                     <h2>Tóm tắt đơn hàng</h2>
                     <div class="summary-row">
                         <span>Tạm tính</span>
-                        <strong class="js-summary-subtotal">@UiFormat.Vnd(subTotal)</strong>
+                        <strong class="js-summary-subtotal">@UiFormat.Vnd(Model.SubTotal)</strong>
                     </div>
                     <div class="summary-row">
                         <span>Phí vận chuyển</span>
-                        <strong class="js-summary-shipping">@UiFormat.Vnd(shippingFee)</strong>
+                        <strong class="js-summary-shipping">@UiFormat.Vnd(Model.ShippingFee)</strong>
                     </div>
                     <div class="summary-row discount-row">
                         <span>Giảm giá</span>
-                        <strong class="js-summary-discount">-@UiFormat.Vnd(discount)</strong>
+                        <strong class="js-summary-discount">-@UiFormat.Vnd(Model.Discount)</strong>
                     </div>
                     <div class="summary-total">
                         <span>Tổng cộng</span>
-                        <strong class="js-summary-total">@UiFormat.Vnd(total)</strong>
+                        <strong class="js-summary-total">@UiFormat.Vnd(Model.Total)</strong>
                     </div>
 
                     <button class="btn btn-primary-custom w-100" type="button">
