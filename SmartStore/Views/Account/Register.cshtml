@@ -9,9 +9,9 @@
             <div class="auth-copy">
                 <span class="eyebrow"><i class="fa-solid fa-user-plus"></i> Thành viên mới</span>
                 <h1>Tạo tài khoản mua sắm trong vài giây</h1>
-                <p>Đăng ký bằng Gmail, đặt mật khẩu tối thiểu 6 ký tự và bắt đầu trải nghiệm cửa hàng.</p>
+                <p>Đăng ký bằng Gmail, đặt mật khẩu tối thiểu 6 ký tự và bắt đầu trải nghiệm cửa hàng thời trang SmartStore.</p>
                 <div class="auth-benefits">
-                    <span><i class="fa-solid fa-circle-check"></i> Chỉ nhận địa chỉ @@gmail.com</span>
+                    <span><i class="fa-solid fa-circle-check"></i> Chỉ nhận địa chỉ Gmail</span>
                     <span><i class="fa-solid fa-circle-check"></i> Kiểm tra nhập lại mật khẩu</span>
                     <span><i class="fa-solid fa-circle-check"></i> Đăng nhập ngay sau khi đăng ký</span>
                 </div>
@@ -19,7 +19,6 @@
 
             <form asp-action="Register" method="post" class="auth-card" novalidate>
                 @Html.AntiForgeryToken()
-
                 <div class="auth-card-heading">
                     <span class="auth-icon"><i class="fa-solid fa-id-card"></i></span>
                     <div>
@@ -31,7 +30,7 @@
                 <div asp-validation-summary="ModelOnly" class="text-danger auth-validation"></div>
 
                 <div class="form-group-custom">
-                    <label asp-for="FullName">Họ tên</label>
+                    <label asp-for="FullName">Họ và tên</label>
                     <div class="auth-input">
                         <i class="fa-solid fa-user"></i>
                         <input asp-for="FullName" class="form-control" placeholder="Nguyễn Văn A" autocomplete="name" />
@@ -69,7 +68,7 @@
                 </div>
 
                 <button type="submit" class="btn btn-primary-custom auth-submit">
-                    <i class="fa-solid fa-user-check me-1"></i> Tạo tài khoản
+                    <i class="fa-solid fa-user-check me-1"></i> Tạo tài khoản mới
                 </button>
 
                 <p class="auth-switch">

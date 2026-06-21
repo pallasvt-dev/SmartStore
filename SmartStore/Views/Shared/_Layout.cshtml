@@ -5,7 +5,8 @@
     var signedInUser = isLoggedIn ? await UserManager.GetUserAsync(User) : null;
     var currentUserName = signedInUser?.FullName ?? User.Identity?.Name;
     var isAdmin = User.IsInRole(AppRoles.Admin);
-    var currentRole = isAdmin ? AppRoles.Admin : User.IsInRole(AppRoles.Customer) ? AppRoles.Customer : string.Empty;
+    var isCustomer = User.IsInRole(AppRoles.Customer);
+    var currentRole = isAdmin ? "Quản trị viên" : isCustomer ? "Khách hàng" : string.Empty;
     var returnUrl = $"{Context.Request.Path}{Context.Request.QueryString}";
 }
 <!DOCTYPE html>
@@ -62,9 +63,9 @@
                                 @await Component.InvokeAsync("CartSummary")
                             </li>
                             <li class="nav-item">
-                                <span class="nav-user">
+                                <span class="nav-user" title="Xin chào, @currentUserName">
                                     <i class="fa-solid fa-circle-user"></i>
-                                    <span>@currentUserName@if (!string.IsNullOrWhiteSpace(currentRole)) { <small>@currentRole</small> }</span>
+                                    <span>Xin chào, @currentUserName@if (!string.IsNullOrWhiteSpace(currentRole)) { <small>@currentRole</small> }</span>
                                 </span>
                             </li>
                             <li class="nav-item">
@@ -119,7 +120,7 @@
         <div class="container footer-grid">
             <div class="footer-col">
                 <h3>SmartStore</h3>
-                <p>Giao diện bán hàng hiện đại, dễ dùng và responsive.</p>
+                <p>Cửa hàng thời trang hiện đại với sản phẩm có kích cỡ, màu sắc và tồn kho rõ ràng theo từng biến thể.</p>
             </div>
             <div class="footer-col">
                 <h3>Liên kết</h3>
@@ -139,13 +140,13 @@
                 <h3>Theo dõi</h3>
                 <div class="footer-socials">
                     <a href="#" aria-label="Facebook"><i class="fa-brands fa-facebook-f"></i></a>
-                    <a href="#" aria-label="Twitter"><i class="fa-brands fa-x-twitter"></i></a>
+                    <a href="#" aria-label="X"><i class="fa-brands fa-x-twitter"></i></a>
                     <a href="#" aria-label="Instagram"><i class="fa-brands fa-instagram"></i></a>
                     <a href="#" aria-label="LinkedIn"><i class="fa-brands fa-linkedin-in"></i></a>
                 </div>
             </div>
         </div>
-        <div class="footer-bottom">© 2026 SmartStore. Thiết kế tối ưu trải nghiệm người dùng.</div>
+        <div class="footer-bottom">© 2026 SmartStore. Thiết kế tối ưu cho trải nghiệm mua sắm thời trang.</div>
     </footer>
 
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
