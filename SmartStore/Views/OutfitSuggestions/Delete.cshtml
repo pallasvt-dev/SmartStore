@@ -1,0 +1,3 @@
+@model OutfitSuggestion
+@{ ViewData["Title"] = "Xóa gợi ý phối đồ"; }
+<section class="outfit-admin-page"><div class="container outfit-delete-container"><div class="outfit-delete-panel"><span><i class="fa-solid fa-trash-can"></i></span><h1>Xóa gợi ý phối đồ</h1><p>Bạn sắp xóa gợi ý từ <strong>@Model.Product.Name</strong> phối cùng <strong>@Model.SuggestedProduct.Name</strong>. Thao tác này không thể hoàn tác.</p><form asp-action="Delete" asp-route-id="@Model.Id" method="post">@Html.AntiForgeryToken()<button class="btn btn-danger" type="submit"><i class="fa-solid fa-trash-can"></i> Xóa</button><a class="btn btn-outline-custom" asp-action="Index">Quay lại</a></form></div></div></section>

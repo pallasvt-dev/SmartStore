@@ -1,0 +1,4 @@
+@model OutfitSuggestionFormViewModel
+@{ ViewData["Title"] = "Cập nhật gợi ý phối đồ"; }
+<section class="outfit-admin-page"><div class="container outfit-form-container"><nav class="breadcrumb-line" aria-label="Điều hướng"><a asp-action="Index">Gợi ý phối đồ</a><span>/</span><strong>Cập nhật</strong></nav><div class="outfit-form-heading"><span class="eyebrow dark"><i class="fa-solid fa-pen"></i> Điều chỉnh cách phối</span><h1>Cập nhật gợi ý phối đồ</h1><p>Thay đổi sản phẩm, ghi chú, thứ tự hoặc trạng thái hiển thị.</p></div><form asp-action="Edit" asp-route-id="@Model.Id" method="post" class="outfit-form-panel">@Html.AntiForgeryToken()<partial name="_Form" model="Model" /></form></div></section>
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }

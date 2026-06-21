@@ -1,0 +1,35 @@
+@model List<ProductReview>
+@{
+    ViewData["Title"] = "Quản lý đánh giá";
+}
+
+<section class="review-admin-page">
+    <div class="container">
+        <nav class="breadcrumb-line" aria-label="Điều hướng"><a asp-controller="Admin" asp-action="Index">Bảng điều khiển</a><span>/</span><strong>Quản lý đánh giá</strong></nav>
+        <div class="review-admin-heading"><div><span class="eyebrow dark"><i class="fa-solid fa-star"></i> Phản hồi khách hàng</span><h1>Quản lý đánh giá</h1><p>Duyệt, ẩn hoặc xóa nhận xét sản phẩm của khách hàng.</p></div><span>@Model.Count đánh giá</span></div>
+        @if (TempData["ReviewAdminMessage"] != null) { <div class="alert cart-alert" role="alert"><i class="fa-solid fa-circle-check"></i><span>@TempData["ReviewAdminMessage"]</span><button type="button" class="alert-close" aria-label="Đóng thông báo"><i class="fa-solid fa-xmark"></i></button></div> }
+        @if (Model.Count == 0)
+        {
+            <div class="dashboard-empty-state review-admin-empty"><i class="fa-regular fa-comment-dots"></i><strong>Chưa có đánh giá nào.</strong><span>Đánh giá của khách hàng sẽ xuất hiện tại đây.</span></div>
+        }
+        else
+        {
+            <div class="review-admin-list">
+                @foreach (var review in Model)
+                {
+                    <article class="review-admin-card">
+                        <div class="review-admin-meta"><div><strong>@review.Product.Name</strong><span>@review.User.FullName · @review.CreatedAt.ToString("dd/MM/yyyy HH:mm")</span></div><span class="vietnamese-status-badge @(review.IsApproved ? "is-visible" : "is-hidden")">@(review.IsApproved ? "Đang hiển thị" : "Đã ẩn")</span></div>
+                        <div class="rating-stars" aria-label="@review.Rating sao">@for (var star = 1; star <= 5; star++) { <i class="fa-@(star <= review.Rating ? "solid" : "regular") fa-star"></i> }</div>
+                        <p>@review.Comment</p>
+                        @if (review.Images.Count > 0) { <div class="review-image-list">@foreach (var image in review.Images.OrderBy(image => image.DisplayOrder)) { <a href="@image.ImageUrl" target="_blank" rel="noopener"><img src="@image.ImageUrl" alt="Ảnh đánh giá" /></a> }</div> }
+                        <div class="review-admin-actions">
+                            @if (review.IsApproved) { <form asp-action="Hide" asp-route-id="@review.Id" method="post">@Html.AntiForgeryToken()<button class="btn btn-outline-custom" type="submit"><i class="fa-solid fa-eye-slash"></i> Ẩn</button></form> }
+                            else { <form asp-action="Approve" asp-route-id="@review.Id" method="post">@Html.AntiForgeryToken()<button class="btn btn-primary-custom" type="submit"><i class="fa-solid fa-eye"></i> Hiển thị</button></form> }
+                            <form asp-action="Delete" asp-route-id="@review.Id" method="post" onsubmit="return confirm('Bạn chắc chắn muốn xóa đánh giá này?');">@Html.AntiForgeryToken()<button class="btn btn-outline-danger" type="submit"><i class="fa-solid fa-trash-can"></i> Xóa</button></form>
+                        </div>
+                    </article>
+                }
+            </div>
+        }
+    </div>
+</section>

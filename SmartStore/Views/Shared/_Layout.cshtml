@@ -25,7 +25,7 @@
 </head>
 <body>
     <header class="site-header">
-        <nav class="navbar navbar-expand-lg main-navbar">
+        <nav class="navbar navbar-expand-xxl main-navbar">
             <div class="container">
                 <a class="navbar-brand brand-logo" asp-controller="Home" asp-action="Index">
                     <span class="brand-icon"><i class="fa-solid fa-bag-shopping"></i></span>
@@ -65,10 +65,25 @@
                                     <i class="fa-solid fa-clipboard-list me-1"></i> Quản lý đơn hàng
                                 </a>
                             </li>
+                            <li class="nav-item">
+                                <a class="nav-link nav-link-admin" asp-controller="OutfitSuggestions" asp-action="Index">
+                                    <i class="fa-solid fa-wand-magic-sparkles me-1"></i> Gợi ý phối đồ
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link nav-link-admin" asp-controller="ProductReviews" asp-action="AdminIndex">
+                                    <i class="fa-solid fa-star me-1"></i> Đánh giá
+                                </a>
+                            </li>
                         }
 
                         @if (isCustomer)
                         {
+                            <li class="nav-item">
+                                <a class="nav-link" asp-controller="Wishlist" asp-action="Index">
+                                    <i class="fa-solid fa-heart me-1"></i> Yêu thích
+                                </a>
+                            </li>
                             <li class="nav-item">
                                 <a class="nav-link" asp-controller="Orders" asp-action="MyOrders">
                                     <i class="fa-solid fa-receipt me-1"></i> Đơn hàng của tôi
@@ -151,6 +166,7 @@
                 }
                 @if (isCustomer)
                 {
+                    <a asp-controller="Wishlist" asp-action="Index">Sản phẩm yêu thích</a>
                     <a asp-controller="Orders" asp-action="MyOrders">Đơn hàng của tôi</a>
                 }
                 @if (isAdmin)
@@ -158,6 +174,8 @@
                     <a asp-controller="Admin" asp-action="Index">Bảng điều khiển</a>
                     <a asp-controller="Products" asp-action="Index">Quản lý sản phẩm</a>
                     <a asp-controller="Orders" asp-action="AdminIndex">Quản lý đơn hàng</a>
+                    <a asp-controller="OutfitSuggestions" asp-action="Index">Gợi ý phối đồ</a>
+                    <a asp-controller="ProductReviews" asp-action="AdminIndex">Quản lý đánh giá</a>
                 }
                 <a asp-controller="Home" asp-action="Contact">Liên hệ</a>
             </div>

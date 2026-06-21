@@ -1,11 +1,14 @@
-@model SmartStore.Models.Product
+@using System.Security.Claims
+@model ProductDetailsViewModel
 @{
-    ViewData["Title"] = Model.Name;
+    var product = Model.Product;
+    ViewData["Title"] = product.Name;
     var isLoggedIn = User.Identity?.IsAuthenticated == true;
+    var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
     var returnUrl = $"{Context.Request.Path}{Context.Request.QueryString}";
-    var images = Model.ProductImages.OrderByDescending(i => i.IsMain).ThenBy(i => i.DisplayOrder).ToList();
+    var images = product.ProductImages.OrderByDescending(i => i.IsMain).ThenBy(i => i.DisplayOrder).ToList();
     var mainImage = images.FirstOrDefault()?.ImageUrl;
-    var variants = Model.ProductVariants.Where(v => v.IsActive).OrderBy(v => v.Size.DisplayOrder).ThenBy(v => v.Color.Name).ToList();
+    var variants = product.ProductVariants.Where(v => v.IsActive).OrderBy(v => v.Size.DisplayOrder).ThenBy(v => v.Color.Name).ToList();
     var totalStock = variants.Sum(v => v.StockQuantity);
     var firstVariant = variants.FirstOrDefault(v => v.StockQuantity > 0) ?? variants.FirstOrDefault();
     var sizes = variants.Select(v => v.Size).DistinctBy(s => s.Id).OrderBy(s => s.DisplayOrder).ToList();
@@ -14,139 +17,119 @@
 
 <section class="detail-section">
     <div class="container">
-        <nav class="breadcrumb-line" aria-label="Điều hướng">
-            <a asp-controller="Home" asp-action="Index">Trang chủ</a>
-            <span>/</span>
-            <a asp-controller="Home" asp-action="Index" asp-fragment="san-pham">Sản phẩm</a>
-            <span>/</span>
-            <strong>@Model.Name</strong>
-        </nav>
+        <nav class="breadcrumb-line" aria-label="Điều hướng"><a asp-controller="Home" asp-action="Index">Trang chủ</a><span>/</span><a asp-controller="Home" asp-action="Index" asp-fragment="san-pham">Sản phẩm</a><span>/</span><strong>@product.Name</strong></nav>
+        @if (TempData["ReviewMessage"] != null) { <div class="alert cart-alert" role="alert"><i class="fa-solid fa-circle-info"></i><span>@TempData["ReviewMessage"]</span><button type="button" class="alert-close" aria-label="Đóng thông báo"><i class="fa-solid fa-xmark"></i></button></div> }
+        @if (TempData["WishlistMessage"] != null) { <div class="alert cart-alert" role="alert"><i class="fa-solid fa-heart"></i><span>@TempData["WishlistMessage"]</span><button type="button" class="alert-close" aria-label="Đóng thông báo"><i class="fa-solid fa-xmark"></i></button></div> }
     </div>
 
     <div class="container detail-grid">
         <div class="detail-image-card product-gallery">
-            @if (!string.IsNullOrWhiteSpace(Model.Badge))
-            {
-                <span class="product-badge detail-badge">@Model.Badge</span>
-            }
-            <img class="js-gallery-main" src="@mainImage" alt="@Model.Name" />
-            @if (images.Count > 1)
-            {
-                <div class="gallery-thumbs">
-                    @foreach (var image in images)
-                    {
-                        <button type="button" class="gallery-thumb js-gallery-thumb" data-image-url="@image.ImageUrl" aria-label="Xem hình ảnh sản phẩm">
-                            <img src="@image.ImageUrl" alt="@Model.Name" />
-                        </button>
-                    }
-                </div>
-            }
+            @if (!string.IsNullOrWhiteSpace(product.Badge)) { <span class="product-badge detail-badge">@product.Badge</span> }
+            <img class="js-gallery-main" src="@mainImage" alt="@product.Name" />
+            @if (images.Count > 1) { <div class="gallery-thumbs">@foreach (var image in images) { <button type="button" class="gallery-thumb js-gallery-thumb" data-image-url="@image.ImageUrl" aria-label="Xem hình ảnh sản phẩm"><img src="@image.ImageUrl" alt="@product.Name" /></button> }</div> }
         </div>
 
-        <div class="detail-content js-product-detail"
-             data-variants='@System.Text.Json.JsonSerializer.Serialize(variants.Select(v => new { id = v.Id, sizeId = v.SizeId, colorId = v.ColorId, sku = v.Sku, stock = v.StockQuantity, price = UiFormat.Vnd(v.Price ?? Model.Price) }))'>
+        <div class="detail-content js-product-detail" data-variants='@System.Text.Json.JsonSerializer.Serialize(variants.Select(v => new { id = v.Id, sizeId = v.SizeId, colorId = v.ColorId, sku = v.Sku, stock = v.StockQuantity, price = UiFormat.Vnd(v.Price ?? product.Price) }))'>
             <a class="back-link" asp-controller="Home" asp-action="Index" asp-fragment="san-pham"><i class="fa-solid fa-arrow-left"></i> Quay lại danh sách</a>
-            <span class="eyebrow dark">@Model.Category.Name</span>
-            <h1>@Model.Name</h1>
-            <div class="detail-rating">
-                <i class="fa-solid fa-star"></i>
-                <strong>@Model.Rating/5</strong>
-                <span>Thương hiệu: @(Model.Brand?.Name ?? "SmartStore")</span>
-            </div>
-            <p>@Model.Description</p>
+            <span class="eyebrow dark">@product.Category.Name</span>
+            <h1>@product.Name</h1>
+            <div class="detail-rating"><i class="fa-solid fa-star"></i><strong>@product.Rating.ToString("0.0")/5</strong><span>@Model.Reviews.Count đánh giá · Thương hiệu: @(product.Brand?.Name ?? "SmartStore")</span></div>
+            <p>@product.Description</p>
 
-            <div class="detail-price">
-                <strong class="js-detail-price">@UiFormat.Vnd(firstVariant?.Price ?? Model.Price)</strong>
-                @if (Model.OldPrice.HasValue)
+            <div class="detail-wishlist-row">
+                @if (Model.IsCustomer)
                 {
-                    <del>@UiFormat.Vnd(Model.OldPrice.Value)</del>
+                    <form asp-controller="Wishlist" asp-action="Toggle" method="post" class="wishlist-toggle-form js-wishlist-toggle-form" data-product-id="@product.Id">
+                        @Html.AntiForgeryToken()<input type="hidden" name="productId" value="@product.Id" /><input type="hidden" name="returnUrl" value="@returnUrl" />
+                        <button class="detail-wishlist-btn @(Model.IsFavorite ? "active" : "")" type="submit"><i class="fa-@(Model.IsFavorite ? "solid" : "regular") fa-heart"></i><span>@(Model.IsFavorite ? "Đã yêu thích" : "Thêm vào yêu thích")</span></button>
+                    </form>
+                }
+                else if (!isLoggedIn)
+                {
+                    <a class="detail-wishlist-btn" asp-controller="Account" asp-action="Login" asp-route-returnUrl="@returnUrl"><i class="fa-regular fa-heart"></i><span>Đăng nhập để yêu thích</span></a>
                 }
             </div>
 
-            <div class="detail-info-grid">
-                <div><i class="fa-solid fa-list"></i><span>Danh mục: @Model.Category.Name</span></div>
-                <div><i class="fa-solid fa-shirt"></i><span>Chất liệu: @Model.Material</span></div>
-                <div><i class="fa-solid fa-venus-mars"></i><span>Giới tính: @Model.Gender</span></div>
-                <div><i class="fa-solid fa-box-open"></i><span class="js-detail-stock">@(totalStock > 0 ? $"Tồn kho: {totalStock}" : "Hết hàng")</span></div>
-            </div>
+            <div class="detail-price"><strong class="js-detail-price">@UiFormat.Vnd(firstVariant?.Price ?? product.Price)</strong>@if (product.OldPrice.HasValue) { <del>@UiFormat.Vnd(product.OldPrice.Value)</del> }</div>
+            <div class="detail-info-grid"><div><i class="fa-solid fa-list"></i><span>Danh mục: @product.Category.Name</span></div><div><i class="fa-solid fa-shirt"></i><span>Chất liệu: @product.Material</span></div><div><i class="fa-solid fa-venus-mars"></i><span>Giới tính: @product.Gender</span></div><div><i class="fa-solid fa-box-open"></i><span class="js-detail-stock">@(totalStock > 0 ? $"Tồn kho: {totalStock}" : "Hết hàng")</span></div></div>
 
-            @if (isLoggedIn && firstVariant != null && totalStock > 0)
+            @if (Model.IsCustomer && firstVariant != null && totalStock > 0)
             {
                 <form asp-controller="Cart" asp-action="Add" method="post" class="detail-cart-form js-variant-cart-form">
-                    @Html.AntiForgeryToken()
-                    <input class="js-selected-variant" type="hidden" name="productVariantId" value="@firstVariant.Id" />
-                    <input type="hidden" name="returnUrl" value="@returnUrl" />
-
+                    @Html.AntiForgeryToken()<input class="js-selected-variant" type="hidden" name="productVariantId" value="@firstVariant.Id" /><input type="hidden" name="returnUrl" value="@returnUrl" />
                     <div class="variant-choice-grid">
-                        <div class="form-group-custom">
-                            <label>Kích cỡ</label>
-                            <div class="variant-pill-group js-size-pill-group">
-                                @foreach (var size in sizes)
-                                {
-                                    <button class="variant-pill js-size-pill @(firstVariant.SizeId == size.Id ? "is-selected" : "")" type="button" data-value="@size.Id">@size.Name</button>
-                                }
-                            </div>
-                            <select id="selectedSize" class="form-control visually-hidden js-size-select" aria-label="Kích cỡ">
-                                @foreach (var size in sizes)
-                                {
-                                    <option value="@size.Id" selected="@(firstVariant.SizeId == size.Id)">@size.Name</option>
-                                }
-                            </select>
-                        </div>
-                        <div class="form-group-custom">
-                            <label>Màu sắc</label>
-                            <div class="variant-pill-group js-color-pill-group">
-                                @foreach (var color in colors)
-                                {
-                                    <button class="variant-pill color-option js-color-pill @(firstVariant.ColorId == color.Id ? "is-selected" : "")" type="button" data-value="@color.Id">
-                                        <span class="color-dot" style="background:@color.HexCode"></span>@color.Name
-                                    </button>
-                                }
-                            </div>
-                            <select id="selectedColor" class="form-control visually-hidden js-color-select" aria-label="Màu sắc">
-                                @foreach (var color in colors)
-                                {
-                                    <option value="@color.Id" selected="@(firstVariant.ColorId == color.Id)">@color.Name</option>
-                                }
-                            </select>
-                        </div>
+                        <div class="form-group-custom"><label>Kích cỡ</label><div class="variant-pill-group js-size-pill-group">@foreach (var size in sizes) { <button class="variant-pill js-size-pill @(firstVariant.SizeId == size.Id ? "is-selected" : "")" type="button" data-value="@size.Id">@size.Name</button> }</div><select id="selectedSize" class="form-control visually-hidden js-size-select" aria-label="Kích cỡ">@foreach (var size in sizes) { if (firstVariant.SizeId == size.Id) { <option value="@size.Id" selected>@size.Name</option> } else { <option value="@size.Id">@size.Name</option> } }</select></div>
+                        <div class="form-group-custom"><label>Màu sắc</label><div class="variant-pill-group js-color-pill-group">@foreach (var color in colors) { <button class="variant-pill color-option js-color-pill @(firstVariant.ColorId == color.Id ? "is-selected" : "")" type="button" data-value="@color.Id"><span class="color-dot" style="background:@color.HexCode"></span>@color.Name</button> }</div><select id="selectedColor" class="form-control visually-hidden js-color-select" aria-label="Màu sắc">@foreach (var color in colors) { if (firstVariant.ColorId == color.Id) { <option value="@color.Id" selected>@color.Name</option> } else { <option value="@color.Id">@color.Name</option> } }</select></div>
                     </div>
-
-                    <div class="variant-status">
-                        <span>Mã sản phẩm: <strong class="js-detail-sku">@firstVariant.Sku</strong></span>
-                        <span>Tồn kho biến thể: <strong class="js-variant-stock">@firstVariant.StockQuantity</strong></span>
-                    </div>
-
-                    <label for="quantity" class="quantity-label">Số lượng</label>
-                    <div class="detail-actions detail-cart-actions">
-                        <input class="quantity-input" id="quantity" name="quantity" type="number" value="1" min="1" max="99" />
-                        <button class="btn btn-primary-custom js-add-selected-variant" type="submit"><i class="fa-solid fa-cart-plus me-1"></i> Thêm vào giỏ hàng</button>
-                        <a class="btn btn-outline-custom" asp-controller="Cart" asp-action="Index">Xem giỏ hàng</a>
-                    </div>
-                    <small class="size-guide">Hướng dẫn chọn size: chọn kích cỡ bạn thường mặc; nếu phân vân, hãy ưu tiên size lớn hơn để thoải mái khi vận động.</small>
+                    <div class="variant-status"><span>Mã sản phẩm: <strong class="js-detail-sku">@firstVariant.Sku</strong></span><span>Tồn kho biến thể: <strong class="js-variant-stock">@firstVariant.StockQuantity</strong></span></div>
+                    <label for="quantity" class="quantity-label">Số lượng</label><div class="detail-actions detail-cart-actions"><input class="quantity-input" id="quantity" name="quantity" type="number" value="1" min="1" max="99" /><button class="btn btn-primary-custom js-add-selected-variant" type="submit"><i class="fa-solid fa-cart-plus me-1"></i> Thêm vào giỏ hàng</button><a class="btn btn-outline-custom" asp-controller="Cart" asp-action="Index">Xem giỏ hàng</a></div>
+                    <small class="size-guide">Hướng dẫn chọn kích cỡ: nếu phân vân, hãy ưu tiên kích cỡ lớn hơn để thoải mái khi vận động.</small>
                 </form>
             }
             else if (!isLoggedIn)
             {
-                <div class="login-required-card">
-                    <i class="fa-solid fa-lock"></i>
-                    <div>
-                        <strong>Đăng nhập để thêm sản phẩm vào giỏ hàng</strong>
-                        <span>Bạn cần chọn kích cỡ và màu sắc trước khi mua.</span>
-                    </div>
-                    <a class="btn btn-primary-custom" asp-controller="Account" asp-action="Login" asp-route-returnUrl="@returnUrl">Đăng nhập</a>
-                </div>
+                <div class="login-required-card"><i class="fa-solid fa-lock"></i><div><strong>Đăng nhập để mua sản phẩm</strong><span>Bạn cần chọn kích cỡ và màu sắc trước khi mua.</span></div><a class="btn btn-primary-custom" asp-controller="Account" asp-action="Login" asp-route-returnUrl="@returnUrl">Đăng nhập</a></div>
             }
-            else
+            else if (Model.IsCustomer)
             {
-                <div class="login-required-card">
-                    <i class="fa-solid fa-box-open"></i>
-                    <div>
-                        <strong>Sản phẩm đã hết hàng</strong>
-                        <span>Vui lòng quay lại sau khi cửa hàng cập nhật tồn kho.</span>
-                    </div>
-                </div>
+                <div class="login-required-card"><i class="fa-solid fa-box-open"></i><div><strong>Sản phẩm đã hết hàng</strong><span>Vui lòng quay lại sau khi cửa hàng cập nhật tồn kho.</span></div></div>
             }
         </div>
     </div>
 </section>
+
+<section class="review-section" id="danh-gia">
+    <div class="container">
+        <div class="review-section-heading"><div><span class="eyebrow dark"><i class="fa-solid fa-star"></i> Trải nghiệm thực tế</span><h2>Đánh giá sản phẩm</h2><p>Nhận xét từ khách hàng đã mua và hoàn thành đơn hàng.</p></div><div class="review-score"><strong>@product.Rating.ToString("0.0")</strong><div><span class="rating-stars">@for (var star = 1; star <= 5; star++) { <i class="fa-@(star <= Math.Round(product.Rating) ? "solid" : "regular") fa-star"></i> }</span><small>@Model.Reviews.Count đánh giá</small></div></div></div>
+
+        @if (Model.CanReview)
+        {
+            <form asp-controller="ProductReviews" asp-action="Create" method="post" class="review-form-panel">
+                @Html.AntiForgeryToken()<input type="hidden" name="productId" value="@product.Id" />
+                <div><h3>Chia sẻ đánh giá của bạn</h3><p>Ý kiến của bạn giúp khách hàng khác chọn sản phẩm phù hợp hơn.</p></div>
+                <fieldset class="review-rating-input"><legend>Số sao</legend>@for (var star = 5; star >= 1; star--) { <input id="review-star-@star" name="rating" type="radio" value="@star" required /><label for="review-star-@star" title="@star sao"><i class="fa-solid fa-star"></i></label> }</fieldset>
+                <div class="form-group-custom"><label for="reviewComment">Bình luận của bạn</label><textarea id="reviewComment" name="comment" class="form-control" rows="4" maxlength="1000" required placeholder="Chia sẻ cảm nhận của bạn về chất liệu, form dáng, màu sắc..."></textarea></div>
+                <div class="form-group-custom"><label for="reviewImages">Ảnh đánh giá</label><textarea id="reviewImages" name="imageUrls" class="form-control" rows="2" placeholder="Mỗi dòng một URL ảnh, tối đa 5 ảnh"></textarea><small>Không bắt buộc. Chỉ nhập đường dẫn ảnh hợp lệ.</small></div>
+                <button class="btn btn-primary-custom" type="submit"><i class="fa-solid fa-paper-plane"></i> Gửi đánh giá</button>
+            </form>
+        }
+        else if (Model.IsCustomer && Model.HasReviewed)
+        {
+            <div class="review-eligibility-note success"><i class="fa-solid fa-circle-check"></i><span>Bạn đã đánh giá sản phẩm này. Mỗi khách hàng chỉ được đánh giá một lần.</span></div>
+        }
+        else if (Model.IsCustomer && !Model.HasPurchased)
+        {
+            <div class="review-eligibility-note"><i class="fa-solid fa-bag-shopping"></i><span>Bạn cần mua sản phẩm này để đánh giá.</span></div>
+        }
+        else if (!isLoggedIn)
+        {
+            <div class="review-eligibility-note"><i class="fa-solid fa-lock"></i><span>Đăng nhập và hoàn thành đơn hàng để đánh giá sản phẩm.</span></div>
+        }
+
+        @if (Model.Reviews.Count == 0)
+        {
+            <div class="review-empty-state"><i class="fa-regular fa-comment-dots"></i><h3>Sản phẩm chưa có đánh giá nào.</h3><p>Hãy là khách hàng đầu tiên chia sẻ trải nghiệm sau khi mua sản phẩm.</p></div>
+        }
+        else
+        {
+            <div class="review-list">
+                @foreach (var review in Model.Reviews)
+                {
+                    <article class="review-card">
+                        <div class="review-card-header"><span class="review-avatar">@(string.IsNullOrWhiteSpace(review.User.FullName) ? "K" : review.User.FullName.Trim()[0].ToString().ToUpperInvariant())</span><div><strong>@(string.IsNullOrWhiteSpace(review.User.FullName) ? "Khách hàng" : review.User.FullName)</strong><span>@review.CreatedAt.ToString("dd/MM/yyyy") · Đã mua hàng</span></div><div class="rating-stars">@for (var star = 1; star <= 5; star++) { <i class="fa-@(star <= review.Rating ? "solid" : "regular") fa-star"></i> }</div></div>
+                        <p>@review.Comment</p>
+                        @if (review.Images.Count > 0) { <div class="review-image-list">@foreach (var image in review.Images.OrderBy(image => image.DisplayOrder)) { <a href="@image.ImageUrl" target="_blank" rel="noopener"><img src="@image.ImageUrl" alt="Ảnh khách hàng đánh giá @product.Name" /></a> }</div> }
+                        @if (review.UserId == currentUserId) { <form asp-controller="ProductReviews" asp-action="Delete" asp-route-id="@review.Id" method="post" class="review-delete-form" onsubmit="return confirm('Bạn chắc chắn muốn xóa đánh giá này?');">@Html.AntiForgeryToken()<button type="submit"><i class="fa-solid fa-trash-can"></i> Xóa đánh giá</button></form> }
+                    </article>
+                }
+            </div>
+        }
+    </div>
+</section>
+
+@if (Model.OutfitSuggestions.Count > 0)
+{
+    <section class="outfit-section"><div class="container"><div class="outfit-section-heading"><span class="eyebrow dark"><i class="fa-solid fa-wand-magic-sparkles"></i> Hoàn thiện phong cách</span><h2>Gợi ý phối cùng</h2><p>Những sản phẩm được cửa hàng lựa chọn để phối cùng @product.Name.</p></div><div class="outfit-grid">
+    @foreach (var suggestion in Model.OutfitSuggestions) { var suggested = suggestion.SuggestedProduct; var image = suggested.ProductImages.OrderByDescending(item => item.IsMain).ThenBy(item => item.DisplayOrder).FirstOrDefault()?.ImageUrl; <article class="outfit-card"><a asp-controller="Home" asp-action="Details" asp-route-id="@suggested.Id"><img src="@image" alt="@suggested.Name" /></a><div><span>@(suggestion.Title ?? "Gợi ý phối cùng")</span><h3>@suggested.Name</h3><strong>@UiFormat.Vnd(suggested.Price)</strong>@if (!string.IsNullOrWhiteSpace(suggestion.Note)) { <p>@suggestion.Note</p> }<a class="btn btn-outline-custom" asp-controller="Home" asp-action="Details" asp-route-id="@suggested.Id">Xem chi tiết</a></div></article> }
+    </div></div></section>
+}

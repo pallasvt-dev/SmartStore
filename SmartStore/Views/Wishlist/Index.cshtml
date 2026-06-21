@@ -1,0 +1,55 @@
+@model List<WishlistItem>
+@{
+    ViewData["Title"] = "Sản phẩm yêu thích";
+}
+
+<section class="wishlist-page">
+    <div class="container">
+        <nav class="breadcrumb-line" aria-label="Điều hướng">
+            <a asp-controller="Home" asp-action="Index">Trang chủ</a><span>/</span><strong>Sản phẩm yêu thích</strong>
+        </nav>
+        <div class="wishlist-heading">
+            <div><span class="eyebrow dark"><i class="fa-solid fa-heart"></i> Bộ sưu tập của bạn</span><h1>Sản phẩm yêu thích</h1><p>Lưu lại những món đồ bạn quan tâm để dễ dàng xem lại.</p></div>
+            @if (Model.Count > 0) { <span class="wishlist-count">@Model.Count sản phẩm</span> }
+        </div>
+
+        @if (TempData["WishlistMessage"] != null)
+        {
+            <div class="alert cart-alert" role="alert"><i class="fa-solid fa-circle-check"></i><span>@TempData["WishlistMessage"]</span><button type="button" class="alert-close" aria-label="Đóng thông báo"><i class="fa-solid fa-xmark"></i></button></div>
+        }
+
+        @if (Model.Count == 0)
+        {
+            <div class="wishlist-empty-state"><span><i class="fa-regular fa-heart"></i></span><h2>Bạn chưa có sản phẩm yêu thích nào</h2><p>Hãy lưu lại những sản phẩm bạn thích để xem lại dễ dàng hơn.</p><a class="btn btn-primary-custom" asp-controller="Home" asp-action="Index" asp-fragment="san-pham">Khám phá sản phẩm</a></div>
+        }
+        else
+        {
+            <div class="wishlist-grid">
+                @foreach (var item in Model)
+                {
+                    var product = item.Product;
+                    var image = product.ProductImages.OrderByDescending(entry => entry.IsMain).ThenBy(entry => entry.DisplayOrder).FirstOrDefault()?.ImageUrl;
+                    var stock = product.ProductVariants.Where(variant => variant.IsActive).Sum(variant => variant.StockQuantity);
+                    <article class="wishlist-product-card">
+                        <a class="wishlist-product-image" asp-controller="Home" asp-action="Details" asp-route-id="@product.Id"><img src="@image" alt="@product.Name" /><span>@(stock > 0 ? "Còn hàng" : "Hết hàng")</span></a>
+                        <div class="wishlist-product-body">
+                            <small>@product.Category.Name · @(product.Brand?.Name ?? "SmartStore")</small>
+                            <h2>@product.Name</h2>
+                            <div class="wishlist-product-rating"><i class="fa-solid fa-star"></i><span>@product.Rating.ToString("0.0")</span></div>
+                            <strong>@UiFormat.Vnd(product.Price)</strong>
+                            <div class="wishlist-product-actions">
+                                <a class="btn btn-primary-custom" asp-controller="Home" asp-action="Details" asp-route-id="@product.Id">Xem chi tiết</a>
+                                <form asp-action="Remove" method="post">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="productId" value="@product.Id" />
+                                    <button class="wishlist-remove-btn" type="submit" title="Bỏ yêu thích" aria-label="Bỏ yêu thích @product.Name"><i class="fa-solid fa-heart-crack"></i></button>
+                                </form>
+                            </div>
+                            <p>Chọn kích cỡ và màu sắc tại trang chi tiết trước khi thêm vào giỏ hàng.</p>
+                        </div>
+                    </article>
+                }
+            </div>
+        }
+    </div>
+</section>

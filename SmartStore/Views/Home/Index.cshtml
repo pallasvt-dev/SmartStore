@@ -7,6 +7,8 @@
     var featuredImage = featured?.ProductImages.OrderByDescending(i => i.IsMain).ThenBy(i => i.DisplayOrder).FirstOrDefault()?.ImageUrl;
     var isLoggedIn = User.Identity?.IsAuthenticated == true;
     var isAdmin = User.IsInRole(AppRoles.Admin);
+    var isCustomer = User.IsInRole(AppRoles.Customer);
+    var favoriteProductIds = ViewBag.FavoriteProductIds as HashSet<int> ?? new HashSet<int>();
     var returnUrl = $"{Context.Request.Path}{Context.Request.QueryString}#san-pham";
 }
 
@@ -90,11 +92,27 @@
                     var activeVariants = product.ProductVariants.Where(v => v.IsActive).ToList();
                     var totalStock = activeVariants.Sum(v => v.StockQuantity);
                     var firstVariant = activeVariants.FirstOrDefault(v => v.StockQuantity > 0) ?? activeVariants.FirstOrDefault();
+                    var isFavorite = favoriteProductIds.Contains(product.Id);
                     <article class="product-card">
                         <a class="product-image" asp-controller="Home" asp-action="Details" asp-route-id="@product.Id" aria-label="Xem @product.Name">
                             <span class="product-badge">@(totalStock > 0 ? (product.Badge ?? "Còn hàng") : "Hết hàng")</span>
                             <img src="@mainImage" alt="@product.Name" />
                         </a>
+                        @if (isCustomer)
+                        {
+                            <form asp-controller="Wishlist" asp-action="Toggle" method="post" class="wishlist-toggle-form js-wishlist-toggle-form" data-product-id="@product.Id">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="productId" value="@product.Id" />
+                                <input type="hidden" name="returnUrl" value="@returnUrl" />
+                                <button class="wishlist-heart-btn @(isFavorite ? "active" : "")" type="submit" aria-label="@(isFavorite ? "Bỏ yêu thích" : "Thêm vào yêu thích")" title="@(isFavorite ? "Bỏ yêu thích" : "Thêm vào yêu thích")">
+                                    <i class="fa-@(isFavorite ? "solid" : "regular") fa-heart"></i>
+                                </button>
+                            </form>
+                        }
+                        else if (!isLoggedIn)
+                        {
+                            <a class="wishlist-heart-btn" asp-controller="Account" asp-action="Login" asp-route-returnUrl="@returnUrl" aria-label="Đăng nhập để yêu thích" title="Đăng nhập để yêu thích"><i class="fa-regular fa-heart"></i></a>
+                        }
                         <div class="product-body">
                             <div class="product-meta">
                                 <span>@product.Category.Name</span>

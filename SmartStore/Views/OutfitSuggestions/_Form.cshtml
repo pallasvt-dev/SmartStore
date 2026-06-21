@@ -1,0 +1,12 @@
+@model OutfitSuggestionFormViewModel
+<div asp-validation-summary="ModelOnly" class="order-validation"></div>
+<input asp-for="Id" type="hidden" />
+<div class="outfit-form-grid">
+    <div class="form-group-custom"><label asp-for="ProductId">Sản phẩm chính</label><select asp-for="ProductId" asp-items="Model.Products" class="form-select"><option value="">Chọn sản phẩm chính</option></select><span asp-validation-for="ProductId" class="text-danger"></span></div>
+    <div class="form-group-custom"><label asp-for="SuggestedProductId">Sản phẩm phối cùng</label><select asp-for="SuggestedProductId" asp-items="Model.Products" class="form-select"><option value="">Chọn sản phẩm phối cùng</option></select><span asp-validation-for="SuggestedProductId" class="text-danger"></span></div>
+    <div class="form-group-custom outfit-form-wide"><label asp-for="Title">Tiêu đề</label><input asp-for="Title" class="form-control" placeholder="Ví dụ: Phối theo phong cách năng động" /><span asp-validation-for="Title" class="text-danger"></span></div>
+    <div class="form-group-custom outfit-form-wide"><label asp-for="Note">Ghi chú</label><textarea asp-for="Note" class="form-control" rows="4" placeholder="Gợi ý màu sắc, hoàn cảnh sử dụng hoặc phong cách phối..."></textarea><span asp-validation-for="Note" class="text-danger"></span></div>
+    <div class="form-group-custom"><label asp-for="DisplayOrder">Thứ tự hiển thị</label><input asp-for="DisplayOrder" class="form-control" type="number" min="0" /><span asp-validation-for="DisplayOrder" class="text-danger"></span></div>
+    <label class="outfit-active-toggle"><input asp-for="IsActive" type="checkbox" /><span><strong>Đang hiển thị</strong><small>Hiển thị gợi ý này trên trang chi tiết sản phẩm.</small></span></label>
+</div>
+<div class="outfit-form-actions"><button class="btn btn-primary-custom" type="submit"><i class="fa-solid fa-floppy-disk"></i> Lưu</button><a class="btn btn-outline-custom" asp-action="Index"><i class="fa-solid fa-arrow-left"></i> Quay lại</a></div>
