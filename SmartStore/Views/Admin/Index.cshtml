@@ -1,0 +1,184 @@
+@using System.Globalization
+@model AdminDashboardViewModel
+@{
+    ViewData["Title"] = "Bảng điều khiển";
+    var vietnameseCulture = CultureInfo.GetCultureInfo("vi-VN");
+    var currentDate = DateTime.Now.ToString("dddd, dd/MM/yyyy", vietnameseCulture);
+    var maxRevenue = Math.Max(Model.RevenueChart.DefaultIfEmpty().Max(item => item?.Revenue ?? 0), 1);
+    var totalStatusOrders = Math.Max(Model.OrderStatusChart.Sum(item => item.Count), 1);
+    var maxSoldQuantity = Math.Max(Model.TopSellingProducts.DefaultIfEmpty().Max(item => item?.SoldQuantity ?? 0), 1);
+}
+
+<section class="admin-dashboard">
+    <div class="container">
+        <header class="dashboard-header">
+            <div>
+                <span class="eyebrow dark"><i class="fa-solid fa-gauge-high"></i> Tổng quan cửa hàng</span>
+                <h1>Bảng điều khiển</h1>
+                <p>Theo dõi doanh thu, đơn hàng và tình trạng kho của cửa hàng.</p>
+            </div>
+            <div class="dashboard-date"><i class="fa-regular fa-calendar"></i><span>@currentDate</span></div>
+        </header>
+
+        <div class="dashboard-grid">
+            <article class="stat-card stat-revenue">
+                <span class="stat-card-icon"><i class="fa-solid fa-coins"></i></span>
+                <div><span class="stat-card-label">Doanh thu hôm nay</span><strong class="stat-card-value">@UiFormat.Vnd(Model.TodayRevenue)</strong><small>@Model.TodayOrders đơn được tạo hôm nay</small></div>
+            </article>
+            <article class="stat-card stat-month">
+                <span class="stat-card-icon"><i class="fa-solid fa-calendar-check"></i></span>
+                <div><span class="stat-card-label">Doanh thu tháng này</span><strong class="stat-card-value">@UiFormat.Vnd(Model.MonthRevenue)</strong><small>Chỉ tính đơn đã hoàn thành</small></div>
+            </article>
+            <article class="stat-card stat-total">
+                <span class="stat-card-icon"><i class="fa-solid fa-chart-line"></i></span>
+                <div><span class="stat-card-label">Tổng doanh thu</span><strong class="stat-card-value">@UiFormat.Vnd(Model.TotalRevenue)</strong><small>@Model.CompletedOrders đơn hoàn thành</small></div>
+            </article>
+            <article class="stat-card stat-pending">
+                <span class="stat-card-icon"><i class="fa-solid fa-clock"></i></span>
+                <div><span class="stat-card-label">Đơn chờ xác nhận</span><strong class="stat-card-value">@Model.PendingOrders</strong><small>Cần được xử lý sớm</small></div>
+            </article>
+            <article class="stat-card stat-shipping">
+                <span class="stat-card-icon"><i class="fa-solid fa-truck-fast"></i></span>
+                <div><span class="stat-card-label">Đơn đang giao</span><strong class="stat-card-value">@Model.ShippingOrders</strong><small>@Model.CanceledOrders đơn đã hủy</small></div>
+            </article>
+            <article class="stat-card stat-low-stock">
+                <span class="stat-card-icon"><i class="fa-solid fa-triangle-exclamation"></i></span>
+                <div><span class="stat-card-label">Sản phẩm sắp hết hàng</span><strong class="stat-card-value">@Model.LowStockVariants</strong><small>Biến thể còn từ 1 đến 5 sản phẩm</small></div>
+            </article>
+            <article class="stat-card stat-out-stock">
+                <span class="stat-card-icon"><i class="fa-solid fa-box-open"></i></span>
+                <div><span class="stat-card-label">Sản phẩm hết hàng</span><strong class="stat-card-value">@Model.OutOfStockVariants</strong><small>@Model.ActiveProducts/@Model.TotalProducts sản phẩm đang bán</small></div>
+            </article>
+            <article class="stat-card stat-customers">
+                <span class="stat-card-icon"><i class="fa-solid fa-users"></i></span>
+                <div><span class="stat-card-label">Khách hàng</span><strong class="stat-card-value">@Model.TotalCustomers</strong><small>Tài khoản thuộc vai trò khách hàng</small></div>
+            </article>
+        </div>
+
+        <div class="dashboard-chart-grid">
+            <section class="revenue-chart-card">
+                <div class="dashboard-card-heading">
+                    <div><h2>Doanh thu 7 ngày gần nhất</h2><p>Doanh thu từ các đơn đã hoàn thành.</p></div>
+                    <span class="dashboard-heading-icon revenue"><i class="fa-solid fa-chart-column"></i></span>
+                </div>
+                <div class="revenue-chart" role="img" aria-label="Biểu đồ doanh thu 7 ngày gần nhất">
+                    @foreach (var point in Model.RevenueChart)
+                    {
+                        var height = point.Revenue <= 0 ? 3 : Math.Max((double)(point.Revenue / maxRevenue * 100), 8);
+                        <div class="revenue-bar-column">
+                            <div class="revenue-bar-value">@UiFormat.Vnd(point.Revenue)<small>@point.OrderCount đơn</small></div>
+                            <div class="revenue-bar-track"><span style="height: @height.ToString("0.##", CultureInfo.InvariantCulture)%"></span></div>
+                            <strong>@point.Label</strong>
+                        </div>
+                    }
+                </div>
+            </section>
+
+            <section class="status-chart-card">
+                <div class="dashboard-card-heading">
+                    <div><h2>Trạng thái đơn hàng</h2><p>Phân bổ tất cả đơn hiện có.</p></div>
+                    <span class="dashboard-heading-icon orders"><i class="fa-solid fa-list-check"></i></span>
+                </div>
+                <div class="status-chart-list">
+                    @foreach (var point in Model.OrderStatusChart)
+                    {
+                        var percent = point.Count * 100d / totalStatusOrders;
+                        <div class="status-chart-row">
+                            <div><span class="order-status @OrderDisplay.StatusClass(point.Status)">@OrderDisplay.Status(point.Status)</span><strong>@point.Count</strong></div>
+                            <div class="status-progress"><span class="@OrderDisplay.StatusClass(point.Status)" style="width: @percent.ToString("0.##", CultureInfo.InvariantCulture)%"></span></div>
+                        </div>
+                    }
+                </div>
+            </section>
+        </div>
+
+        <section class="dashboard-table-card recent-orders-card">
+            <div class="dashboard-card-heading">
+                <div><h2>Đơn hàng mới nhất</h2><p>8 đơn hàng được tạo gần đây nhất.</p></div>
+                <a class="dashboard-text-link" asp-controller="Orders" asp-action="AdminIndex">Xem tất cả <i class="fa-solid fa-arrow-right"></i></a>
+            </div>
+            @if (Model.RecentOrders.Count == 0)
+            {
+                <div class="dashboard-empty-state"><i class="fa-solid fa-receipt"></i><strong>Chưa có đơn hàng nào.</strong><span>Đơn hàng mới sẽ xuất hiện tại đây.</span></div>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="dashboard-table">
+                        <thead><tr><th>Mã đơn</th><th>Khách hàng</th><th>Ngày đặt</th><th>Tổng tiền</th><th>Trạng thái</th><th>Thao tác</th></tr></thead>
+                        <tbody>
+                            @foreach (var order in Model.RecentOrders)
+                            {
+                                <tr>
+                                    <td><strong>@order.OrderCode</strong></td>
+                                    <td>@order.CustomerName</td>
+                                    <td>@order.CreatedAt.ToString("dd/MM/yyyy")<small>@order.CreatedAt.ToString("HH:mm")</small></td>
+                                    <td><strong class="dashboard-money">@UiFormat.Vnd(order.Total)</strong></td>
+                                    <td><span class="order-status @OrderDisplay.StatusClass(order.OrderStatus)">@OrderDisplay.Status(order.OrderStatus)</span></td>
+                                    <td><a class="dashboard-icon-btn" asp-controller="Orders" asp-action="Details" asp-route-id="@order.OrderId" title="Xem chi tiết" aria-label="Xem chi tiết @order.OrderCode"><i class="fa-solid fa-eye"></i></a></td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </section>
+
+        <div class="dashboard-bottom-grid">
+            <section class="dashboard-table-card stock-alert-card">
+                <div class="dashboard-card-heading">
+                    <div><h2>Cảnh báo tồn kho</h2><p>Các biến thể còn tối đa 5 sản phẩm.</p></div>
+                    <span class="dashboard-heading-icon warning"><i class="fa-solid fa-boxes-stacked"></i></span>
+                </div>
+                @if (Model.LowStockVariantsList.Count == 0)
+                {
+                    <div class="dashboard-empty-state stable"><i class="fa-solid fa-circle-check"></i><strong>Tồn kho đang ổn định.</strong><span>Chưa có biến thể cần bổ sung.</span></div>
+                }
+                else
+                {
+                    <div class="dashboard-stock-list">
+                        @foreach (var variant in Model.LowStockVariantsList)
+                        {
+                            <article class="dashboard-stock-item">
+                                <img src="@variant.ImageUrl" alt="@variant.ProductName" />
+                                <div class="dashboard-stock-info"><strong>@variant.ProductName</strong><span>@variant.SizeName / @variant.ColorName</span><small>@variant.Sku</small></div>
+                                <span class="low-stock-badge @(variant.StockQuantity == 0 ? "is-out" : "")">@(variant.StockQuantity == 0 ? "Hết hàng" : $"Còn {variant.StockQuantity}")</span>
+                                <a class="dashboard-icon-btn" asp-controller="Products" asp-action="Edit" asp-route-id="@variant.ProductId" title="Cập nhật tồn kho" aria-label="Cập nhật @variant.ProductName"><i class="fa-solid fa-pen"></i></a>
+                            </article>
+                        }
+                    </div>
+                }
+            </section>
+
+            <section class="dashboard-table-card top-products-card">
+                <div class="dashboard-card-heading">
+                    <div><h2>Sản phẩm bán chạy</h2><p>5 sản phẩm có số lượng bán cao nhất.</p></div>
+                    <span class="dashboard-heading-icon success"><i class="fa-solid fa-trophy"></i></span>
+                </div>
+                @if (Model.TopSellingProducts.Count == 0)
+                {
+                    <div class="dashboard-empty-state"><i class="fa-solid fa-chart-simple"></i><strong>Chưa có dữ liệu bán hàng.</strong><span>Dữ liệu xuất hiện khi có đơn hoàn thành.</span></div>
+                }
+                else
+                {
+                    <div class="top-selling-list">
+                        @for (var index = 0; index < Model.TopSellingProducts.Count; index++)
+                        {
+                            var product = Model.TopSellingProducts[index];
+                            var progress = product.SoldQuantity * 100d / maxSoldQuantity;
+                            <article class="top-selling-item">
+                                <span class="top-selling-rank">@(index + 1)</span>
+                                <img src="@product.ImageUrl" alt="@product.ProductName" />
+                                <div>
+                                    <strong>@product.ProductName</strong>
+                                    <span>@product.SoldQuantity sản phẩm · @UiFormat.Vnd(product.Revenue)</span>
+                                    <div class="selling-progress"><span style="width: @progress.ToString("0.##", CultureInfo.InvariantCulture)%"></span></div>
+                                </div>
+                            </article>
+                        }
+                    </div>
+                }
+            </section>
+        </div>
+    </div>
+</section>

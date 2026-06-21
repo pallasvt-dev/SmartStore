@@ -51,6 +51,11 @@
                         @if (isAdmin)
                         {
                             <li class="nav-item">
+                                <a class="nav-link nav-link-admin" asp-controller="Admin" asp-action="Index">
+                                    <i class="fa-solid fa-gauge-high me-1"></i> Bảng điều khiển
+                                </a>
+                            </li>
+                            <li class="nav-item">
                                 <a class="nav-link nav-link-admin" asp-controller="Products" asp-action="Index">
                                     <i class="fa-solid fa-boxes-stacked me-1"></i> Quản lý sản phẩm
                                 </a>
@@ -150,6 +155,7 @@
                 }
                 @if (isAdmin)
                 {
+                    <a asp-controller="Admin" asp-action="Index">Bảng điều khiển</a>
                     <a asp-controller="Products" asp-action="Index">Quản lý sản phẩm</a>
                     <a asp-controller="Orders" asp-action="AdminIndex">Quản lý đơn hàng</a>
                 }
