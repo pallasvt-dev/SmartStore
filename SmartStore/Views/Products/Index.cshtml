@@ -1,105 +1,75 @@
-@model IEnumerable<SmartStore.Models.Product>
+@model AdminProductIndexViewModel
 @{
     ViewData["Title"] = "Quản lý sản phẩm";
+    var products = Model.Products;
 }
 
 <section class="admin-section">
-    <div class="container">
-        <div class="admin-hero">
-            <div>
-                <a class="back-link" asp-controller="Home" asp-action="Index"><i class="fa-solid fa-arrow-left"></i> Về trang bán hàng</a>
-                <span class="eyebrow dark"><i class="fa-solid fa-shirt"></i> Danh mục thời trang</span>
-                <h1>Quản lý sản phẩm</h1>
-            </div>
-            <a class="btn btn-primary-custom" asp-action="Create"><i class="fa-solid fa-plus me-1"></i> Thêm sản phẩm mới</a>
-        </div>
+    <header class="admin-page-header">
+        <div><span class="eyebrow dark"><i class="fa-solid fa-shirt"></i> Kho sản phẩm</span><h1>Quản lý sản phẩm</h1><p>Theo dõi sản phẩm, biến thể, giá bán và tồn kho.</p></div>
+        <a class="btn btn-primary-custom" asp-action="Create"><i class="fa-solid fa-plus"></i> Thêm sản phẩm mới</a>
+    </header>
 
-        @if (TempData["ProductMessage"] != null)
+    @if (TempData["ProductMessage"] != null)
+    {
+        <div class="alert cart-alert" role="alert"><i class="fa-solid fa-circle-check"></i><span>@TempData["ProductMessage"]</span><button type="button" class="alert-close" aria-label="Đóng thông báo"><i class="fa-solid fa-xmark"></i></button></div>
+    }
+
+    <div class="admin-stats-grid">
+        <div class="admin-stat-card"><span>Sản phẩm hiển thị</span><strong>@products.Count</strong></div>
+        <div class="admin-stat-card"><span>Biến thể đang bán</span><strong>@products.Sum(product => product.ProductVariants.Count(variant => variant.IsActive))</strong></div>
+        <div class="admin-stat-card"><span>Tổng tồn kho</span><strong>@products.Sum(product => product.ProductVariants.Where(variant => variant.IsActive).Sum(variant => variant.StockQuantity))</strong></div>
+    </div>
+
+    <form asp-action="Index" method="get" class="admin-filter-card admin-product-filter">
+        <div><label for="search">Tìm kiếm</label><input id="search" name="search" value="@Model.Search" class="form-control" placeholder="Tên sản phẩm hoặc SKU" /></div>
+        <div><label for="categoryId">Danh mục</label><select id="categoryId" name="categoryId" asp-items="Model.Categories" class="form-select"><option value="">Tất cả danh mục</option></select></div>
+        <div><label for="brandId">Thương hiệu</label><select id="brandId" name="brandId" asp-items="Model.Brands" class="form-select"><option value="">Tất cả thương hiệu</option></select></div>
+        <div>
+            <label for="stockStatus">Tồn kho</label>
+            <select id="stockStatus" name="stockStatus" class="form-select">
+                <option value="">Tất cả trạng thái</option>
+                @if (Model.StockStatus == "available") { <option value="available" selected>Còn hàng</option> } else { <option value="available">Còn hàng</option> }
+                @if (Model.StockStatus == "low") { <option value="low" selected>Sắp hết hàng</option> } else { <option value="low">Sắp hết hàng</option> }
+                @if (Model.StockStatus == "out") { <option value="out" selected>Hết hàng</option> } else { <option value="out">Hết hàng</option> }
+            </select>
+        </div>
+        <div class="admin-filter-actions"><button class="btn btn-primary-custom" type="submit"><i class="fa-solid fa-magnifying-glass"></i> Tìm kiếm</button><a class="btn btn-outline-custom" asp-action="Index"><i class="fa-solid fa-rotate-left"></i> Đặt lại</a></div>
+    </form>
+
+    <div class="admin-table-card">
+        @if (products.Count == 0)
         {
-            <div class="alert alert-success cart-alert" role="alert">
-                <i class="fa-solid fa-circle-check"></i>
-                <span>@TempData["ProductMessage"]</span>
-            </div>
+            <div class="admin-empty-state"><i class="fa-solid fa-box-open"></i><h2>Chưa có sản phẩm nào.</h2><p>Thêm sản phẩm đầu tiên hoặc thay đổi điều kiện tìm kiếm.</p><a class="btn btn-primary-custom" asp-action="Create">Thêm sản phẩm đầu tiên</a></div>
         }
-
-        <div class="admin-stats-grid">
-            <div class="admin-stat-card">
-                <span>Tổng sản phẩm</span>
-                <strong>@Model.Count()</strong>
-            </div>
-            <div class="admin-stat-card">
-                <span>Tổng biến thể</span>
-                <strong>@Model.Sum(p => p.ProductVariants.Count(v => v.IsActive))</strong>
-            </div>
-            <div class="admin-stat-card">
-                <span>Tổng tồn kho</span>
-                <strong>@Model.Sum(p => p.ProductVariants.Where(v => v.IsActive).Sum(v => v.StockQuantity))</strong>
-            </div>
-        </div>
-
-        <div class="admin-table-card">
-            <div class="admin-table-header">
-                <div>
-                    <h2>Danh sách sản phẩm</h2>
-                    <p>Tìm theo tên sản phẩm, SKU, danh mục hoặc thương hiệu bằng công cụ tìm kiếm của trình duyệt.</p>
-                </div>
-                <a class="btn btn-outline-custom" asp-controller="Home" asp-action="Index"><i class="fa-solid fa-eye me-1"></i> Xem giao diện khách</a>
-            </div>
-
+        else
+        {
             <div class="table-responsive">
-                <table class="table product-admin-table align-middle">
-                    <thead>
-                        <tr>
-                            <th>Sản phẩm</th>
-                            <th>Danh mục</th>
-                            <th>Thương hiệu</th>
-                            <th>Giá bán</th>
-                            <th>Tồn kho</th>
-                            <th>Biến thể</th>
-                            <th>Trạng thái</th>
-                            <th class="text-end">Thao tác</th>
-                        </tr>
-                    </thead>
+                <table class="table product-admin-table admin-products-table align-middle">
+                    <thead><tr><th>Ảnh</th><th>Tên sản phẩm</th><th>Danh mục</th><th>Thương hiệu</th><th>Giá bán</th><th>Biến thể</th><th>Tồn kho</th><th>Trạng thái</th><th class="text-end">Thao tác</th></tr></thead>
                     <tbody>
-                        @foreach (var product in Model)
+                        @foreach (var product in products)
                         {
-                            var mainImage = product.ProductImages.OrderByDescending(i => i.IsMain).ThenBy(i => i.DisplayOrder).FirstOrDefault()?.ImageUrl;
-                            var totalStock = product.ProductVariants.Where(v => v.IsActive).Sum(v => v.StockQuantity);
-                            var variantCount = product.ProductVariants.Count(v => v.IsActive);
+                            var image = product.ProductImages.OrderByDescending(item => item.IsMain).ThenBy(item => item.DisplayOrder).FirstOrDefault()?.ImageUrl;
+                            var variants = product.ProductVariants.Where(item => item.IsActive).ToList();
+                            var stock = variants.Sum(item => item.StockQuantity);
+                            var stockClass = stock <= 0 ? "stock-out" : stock <= 5 ? "stock-low" : "stock-ok";
+                            var stockText = stock <= 0 ? "Hết hàng" : stock <= 5 ? "Sắp hết hàng" : "Còn hàng";
                             <tr>
-                                <td>
-                                    <div class="admin-product-cell">
-                                        <img src="@mainImage" alt="@product.Name" />
-                                        <div>
-                                            <strong>@product.Name</strong>
-                                            <span>@(product.Badge ?? "Đang bán")</span>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td><span class="admin-chip">@product.Category.Name</span></td>
+                                <td>@if (string.IsNullOrWhiteSpace(image)) { <span class="admin-image-placeholder">Chưa có ảnh</span> } else { <img class="admin-product-thumb" src="@image" alt="@product.Name" width="52" height="64" loading="lazy" /> }</td>
+                                <td><strong>@product.Name</strong><small class="table-subtext">@product.Slug</small></td>
+                                <td>@product.Category.Name</td>
                                 <td>@(product.Brand?.Name ?? "Chưa có")</td>
-                                <td>
-                                    <strong class="admin-price">@UiFormat.Vnd(product.Price)</strong>
-                                    @if (product.OldPrice.HasValue)
-                                    {
-                                        <del>@UiFormat.Vnd(product.OldPrice.Value)</del>
-                                    }
-                                </td>
-                                <td><strong>@totalStock</strong></td>
-                                <td>@variantCount</td>
-                                <td><span class="stock-pill">@UiFormat.StockStatus(totalStock)</span></td>
-                                <td>
-                                    <div class="admin-actions justify-content-end">
-                                        <a class="action-btn view" asp-action="Details" asp-route-id="@product.Id" title="Chi tiết"><i class="fa-solid fa-eye"></i></a>
-                                        <a class="action-btn edit" asp-action="Edit" asp-route-id="@product.Id" title="Cập nhật"><i class="fa-solid fa-pen"></i></a>
-                                        <a class="action-btn delete" asp-action="Delete" asp-route-id="@product.Id" title="Ngừng bán"><i class="fa-solid fa-ban"></i></a>
-                                    </div>
-                                </td>
+                                <td><strong class="admin-price">@UiFormat.Vnd(product.Price)</strong>@if (product.OldPrice.HasValue) { <del>@UiFormat.Vnd(product.OldPrice.Value)</del> }</td>
+                                <td>@variants.Count</td>
+                                <td><strong>@stock</strong></td>
+                                <td><span class="admin-badge @stockClass">@stockText</span></td>
+                                <td><div class="admin-actions justify-content-end"><a class="action-btn view" asp-action="Details" asp-route-id="@product.Id" title="Chi tiết"><i class="fa-solid fa-eye"></i></a><a class="action-btn edit" asp-action="Edit" asp-route-id="@product.Id" title="Cập nhật"><i class="fa-solid fa-pen"></i></a><a class="action-btn delete" asp-action="Delete" asp-route-id="@product.Id" title="Ngừng bán"><i class="fa-solid fa-ban"></i></a></div></td>
                             </tr>
                         }
                     </tbody>
                 </table>
             </div>
-        </div>
+        }
     </div>
 </section>

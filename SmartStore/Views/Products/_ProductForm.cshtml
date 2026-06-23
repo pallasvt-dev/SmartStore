@@ -1,10 +1,12 @@
 @model SmartStore.Models.ProductFormViewModel
 @using Microsoft.AspNetCore.Mvc.Rendering
 
-<div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
-<span asp-validation-for="Variants" class="text-danger"></span>
+<div class="product-form-validation">
+    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+    <span asp-validation-for="Variants" class="text-danger"></span>
+</div>
 
-<section class="form-section-card">
+<section class="form-section-card product-basic-card">
     <h2>Thông tin cơ bản</h2>
     <div class="form-grid-two">
         <div class="form-group-custom">
@@ -61,7 +63,7 @@
     </div>
 </section>
 
-<section class="form-section-card">
+<section class="form-section-card product-price-card">
     <h2>Giá bán</h2>
     <div class="form-grid-two">
         <div class="form-group-custom">
@@ -84,8 +86,9 @@
     </div>
 </section>
 
-<section class="form-section-card">
+<section class="form-section-card product-images-card">
     <h2>Hình ảnh</h2>
+    <p class="admin-section-note">Nên sử dụng ảnh vuông hoặc ảnh có tỉ lệ 4:5 để hiển thị đẹp hơn.</p>
     <div class="form-grid-two">
         <div class="form-group-custom">
             <label asp-for="MainImageUrl">Ảnh chính</label>
@@ -109,7 +112,7 @@
     </div>
 </section>
 
-<section class="form-section-card variant-editor js-variant-editor">
+<section class="form-section-card product-variants-card variant-editor js-variant-editor">
     <div class="admin-table-header">
         <div>
             <h2>Biến thể sản phẩm</h2>

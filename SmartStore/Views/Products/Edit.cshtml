@@ -11,7 +11,7 @@
             <h1>Cập nhật sản phẩm</h1>
         </div>
 
-        <form asp-action="Edit" asp-route-id="@Model.Id" method="post" class="admin-form-card">
+        <form asp-action="Edit" asp-route-id="@Model.Id" method="post" class="admin-product-form">
             @Html.AntiForgeryToken()
             <input asp-for="Id" type="hidden" />
             <partial name="_ProductForm" model="Model" />

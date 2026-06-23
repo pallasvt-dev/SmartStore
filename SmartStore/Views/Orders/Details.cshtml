@@ -1,6 +1,7 @@
 @model OrderDetailsViewModel
 @{
     ViewData["Title"] = "Chi tiết đơn hàng";
+    Layout = Model.IsAdmin ? "_AdminLayout" : "_Layout";
     var timeline = new[] { OrderStatus.ChoXacNhan, OrderStatus.DaXacNhan, OrderStatus.DangGiao, OrderStatus.HoanThanh };
 }
 

@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using SmartStore.Data;
 using SmartStore.Models;
+using SmartStore.ViewModels;
 
 namespace SmartStore.Controllers
 {
@@ -17,14 +18,45 @@ namespace SmartStore.Controllers
             _dbContext = dbContext;
         }
 
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(string? search, int? categoryId, int? brandId, string? stockStatus)
         {
-            var products = await ProductQuery()
-                .Where(product => product.IsActive)
+            var query = ProductQuery().AsNoTracking().Where(product => product.IsActive);
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                var keyword = search.Trim();
+                query = query.Where(product => product.Name.Contains(keyword)
+                    || product.ProductVariants.Any(variant => variant.Sku.Contains(keyword)));
+            }
+            if (categoryId.HasValue) query = query.Where(product => product.CategoryId == categoryId.Value);
+            if (brandId.HasValue) query = query.Where(product => product.BrandId == brandId.Value);
+            if (!string.IsNullOrWhiteSpace(stockStatus))
+            {
+                query = stockStatus switch
+                {
+                    "out" => query.Where(product => product.ProductVariants.Where(variant => variant.IsActive).Sum(variant => (int?)variant.StockQuantity) == 0),
+                    "low" => query.Where(product => product.ProductVariants.Where(variant => variant.IsActive).Sum(variant => (int?)variant.StockQuantity) > 0
+                        && product.ProductVariants.Where(variant => variant.IsActive).Sum(variant => (int?)variant.StockQuantity) <= 5),
+                    "available" => query.Where(product => product.ProductVariants.Where(variant => variant.IsActive).Sum(variant => (int?)variant.StockQuantity) > 5),
+                    _ => query
+                };
+            }
+
+            var products = await query
                 .OrderByDescending(product => product.Id)
                 .ToListAsync();
+            var categories = await _dbContext.Categories.AsNoTracking().Where(item => item.IsActive).OrderBy(item => item.Name).ToListAsync();
+            var brands = await _dbContext.Brands.AsNoTracking().Where(item => item.IsActive).OrderBy(item => item.Name).ToListAsync();
 
-            return View(products);
+            return View(new AdminProductIndexViewModel
+            {
+                Products = products,
+                Search = search,
+                CategoryId = categoryId,
+                BrandId = brandId,
+                StockStatus = stockStatus,
+                Categories = new SelectList(categories, "Id", "Name", categoryId),
+                Brands = new SelectList(brands, "Id", "Name", brandId)
+            });
         }
 
         public async Task<IActionResult> Details(int id)

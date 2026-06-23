@@ -1,0 +1,99 @@
+@using SmartStore.Models
+@inject Microsoft.AspNetCore.Identity.UserManager<ApplicationUser> UserManager
+@{
+    var currentController = ViewContext.RouteData.Values["controller"]?.ToString() ?? string.Empty;
+    var currentAction = ViewContext.RouteData.Values["action"]?.ToString() ?? string.Empty;
+    var adminUser = await UserManager.GetUserAsync(User);
+    var adminName = adminUser?.FullName ?? User.Identity?.Name ?? "Quản trị viên";
+    string Active(string controller, string? action = null) =>
+        currentController.Equals(controller, StringComparison.OrdinalIgnoreCase)
+        && (action == null || currentAction.Equals(action, StringComparison.OrdinalIgnoreCase)) ? "active" : string.Empty;
+}
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Quản trị SmartStore</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/admin.css" asp-append-version="true" />
+</head>
+<body class="admin-body">
+    <div class="admin-layout">
+        <aside class="admin-sidebar" id="adminSidebar" aria-label="Điều hướng quản trị">
+            <a class="admin-sidebar-brand" asp-controller="Admin" asp-action="Index">
+                <span><i class="fa-solid fa-bag-shopping"></i></span>
+                <div><strong>SmartStore</strong><small>Trung tâm quản trị</small></div>
+            </a>
+
+            <nav class="admin-menu">
+                <div class="admin-menu-group">
+                    <span class="admin-menu-label">Tổng quan</span>
+                    <a class="admin-menu-item @Active("Admin", "Index")" asp-controller="Admin" asp-action="Index"><i class="fa-solid fa-gauge-high"></i><span>Bảng điều khiển</span></a>
+                </div>
+                <div class="admin-menu-group">
+                    <span class="admin-menu-label">Bán hàng</span>
+                    <a class="admin-menu-item @Active("Orders")" asp-controller="Orders" asp-action="AdminIndex"><i class="fa-solid fa-clipboard-list"></i><span>Quản lý đơn hàng</span></a>
+                </div>
+                <div class="admin-menu-group">
+                    <span class="admin-menu-label">Sản phẩm</span>
+                    <a class="admin-menu-item @Active("Products")" asp-controller="Products" asp-action="Index"><i class="fa-solid fa-shirt"></i><span>Quản lý sản phẩm</span></a>
+                </div>
+                <div class="admin-menu-group">
+                    <span class="admin-menu-label">Tương tác</span>
+                    <a class="admin-menu-item @Active("ProductReviews")" asp-controller="ProductReviews" asp-action="AdminIndex"><i class="fa-solid fa-star"></i><span>Đánh giá sản phẩm</span></a>
+                    <a class="admin-menu-item @Active("OutfitSuggestions")" asp-controller="OutfitSuggestions" asp-action="Index"><i class="fa-solid fa-wand-magic-sparkles"></i><span>Gợi ý phối đồ</span></a>
+                </div>
+                <div class="admin-menu-group admin-menu-system">
+                    <span class="admin-menu-label">Hệ thống</span>
+                    <a class="admin-menu-item" asp-controller="Home" asp-action="Index"><i class="fa-solid fa-store"></i><span>Về trang cửa hàng</span></a>
+                    <form asp-controller="Account" asp-action="Logout" method="post" class="admin-logout-form">
+                        @Html.AntiForgeryToken()
+                        <button class="admin-menu-item admin-logout-btn" type="submit"><i class="fa-solid fa-right-from-bracket"></i><span>Đăng xuất</span></button>
+                    </form>
+                </div>
+            </nav>
+        </aside>
+
+        <button class="sidebar-overlay" type="button" aria-label="Đóng menu quản trị"></button>
+
+        <div class="admin-workspace">
+            <header class="admin-topbar">
+                <button class="admin-sidebar-toggle" type="button" aria-controls="adminSidebar" aria-expanded="false" title="Mở menu"><i class="fa-solid fa-bars"></i></button>
+                <form class="admin-quick-search" asp-controller="Products" asp-action="Index" method="get">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <input name="search" type="search" placeholder="Tìm kiếm sản phẩm, đơn hàng, khách hàng..." aria-label="Tìm kiếm nhanh" />
+                </form>
+                <div class="admin-topbar-actions">
+                    <a class="admin-store-link" asp-controller="Home" asp-action="Index"><i class="fa-solid fa-store"></i><span>Về trang cửa hàng</span></a>
+                    <span class="admin-user"><i class="fa-solid fa-circle-user"></i><span>Xin chào, <strong>@adminName</strong></span></span>
+                    <form asp-controller="Account" asp-action="Logout" method="post">
+                        @Html.AntiForgeryToken()
+                        <button class="admin-topbar-logout" type="submit" title="Đăng xuất" aria-label="Đăng xuất"><i class="fa-solid fa-right-from-bracket"></i></button>
+                    </form>
+                </div>
+            </header>
+
+            <main class="admin-content">
+                <nav class="admin-breadcrumb" aria-label="Điều hướng"><a asp-controller="Admin" asp-action="Index">Quản trị</a><i class="fa-solid fa-chevron-right"></i><span>@ViewData["Title"]</span></nav>
+                @if (TempData["AuthMessage"] != null)
+                {
+                    <div class="alert cart-alert admin-toast" role="alert"><i class="fa-solid fa-circle-check"></i><span>@TempData["AuthMessage"]</span><button type="button" class="alert-close" aria-label="Đóng thông báo"><i class="fa-solid fa-xmark"></i></button></div>
+                }
+                @RenderBody()
+            </main>
+        </div>
+    </div>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    <script src="~/js/admin.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

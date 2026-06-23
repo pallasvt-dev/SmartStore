@@ -15,7 +15,7 @@
             <div>
                 <span class="eyebrow dark"><i class="fa-solid fa-gauge-high"></i> Tổng quan cửa hàng</span>
                 <h1>Bảng điều khiển</h1>
-                <p>Theo dõi doanh thu, đơn hàng và tình trạng kho của cửa hàng.</p>
+                <p>Theo dõi hoạt động kinh doanh của cửa hàng.</p>
             </div>
             <div class="dashboard-date"><i class="fa-regular fa-calendar"></i><span>@currentDate</span></div>
         </header>
@@ -40,6 +40,10 @@
             <article class="stat-card stat-shipping">
                 <span class="stat-card-icon"><i class="fa-solid fa-truck-fast"></i></span>
                 <div><span class="stat-card-label">Đơn đang giao</span><strong class="stat-card-value">@Model.ShippingOrders</strong><small>@Model.CanceledOrders đơn đã hủy</small></div>
+            </article>
+            <article class="stat-card stat-completed">
+                <span class="stat-card-icon"><i class="fa-solid fa-circle-check"></i></span>
+                <div><span class="stat-card-label">Đơn đã hoàn thành</span><strong class="stat-card-value">@Model.CompletedOrders</strong><small>Đã ghi nhận vào doanh thu</small></div>
             </article>
             <article class="stat-card stat-low-stock">
                 <span class="stat-card-icon"><i class="fa-solid fa-triangle-exclamation"></i></span>

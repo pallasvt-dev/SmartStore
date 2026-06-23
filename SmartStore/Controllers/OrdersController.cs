@@ -259,7 +259,12 @@ namespace SmartStore.Controllers
 
         [HttpGet]
         [Authorize(Roles = AppRoles.Admin)]
-        public async Task<IActionResult> AdminIndex(string? search, OrderStatus? status, DateTime? orderDate)
+        public async Task<IActionResult> AdminIndex(
+            string? search,
+            string? customerName,
+            string? phoneNumber,
+            OrderStatus? status,
+            DateTime? orderDate)
         {
             var query = _dbContext.Orders.AsNoTracking().AsQueryable();
             var totalOrders = await query.CountAsync();
@@ -270,10 +275,19 @@ namespace SmartStore.Controllers
             if (!string.IsNullOrWhiteSpace(search))
             {
                 var keyword = search.Trim();
-                query = query.Where(order =>
-                    order.OrderCode.Contains(keyword) ||
-                    order.PhoneNumber.Contains(keyword) ||
-                    order.CustomerName.Contains(keyword));
+                query = query.Where(order => order.OrderCode.Contains(keyword));
+            }
+
+            if (!string.IsNullOrWhiteSpace(customerName))
+            {
+                var keyword = customerName.Trim();
+                query = query.Where(order => order.CustomerName.Contains(keyword));
+            }
+
+            if (!string.IsNullOrWhiteSpace(phoneNumber))
+            {
+                var keyword = phoneNumber.Trim();
+                query = query.Where(order => order.PhoneNumber.Contains(keyword));
             }
 
             if (status.HasValue)
@@ -308,6 +322,8 @@ namespace SmartStore.Controllers
             {
                 Items = items,
                 Search = search,
+                CustomerName = customerName,
+                PhoneNumber = phoneNumber,
                 Status = status,
                 OrderDate = orderDate,
                 TotalOrders = totalOrders,

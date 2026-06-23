@@ -25,7 +25,7 @@
 </head>
 <body>
     <header class="site-header">
-        <nav class="navbar navbar-expand-xxl main-navbar">
+        <nav class="navbar navbar-expand-lg main-navbar">
             <div class="container">
                 <a class="navbar-brand brand-logo" asp-controller="Home" asp-action="Index">
                     <span class="brand-icon"><i class="fa-solid fa-bag-shopping"></i></span>
@@ -51,28 +51,8 @@
                         @if (isAdmin)
                         {
                             <li class="nav-item">
-                                <a class="nav-link nav-link-admin" asp-controller="Admin" asp-action="Index">
-                                    <i class="fa-solid fa-gauge-high me-1"></i> Bảng điều khiển
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link nav-link-admin" asp-controller="Products" asp-action="Index">
-                                    <i class="fa-solid fa-boxes-stacked me-1"></i> Quản lý sản phẩm
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link nav-link-admin" asp-controller="Orders" asp-action="AdminIndex">
-                                    <i class="fa-solid fa-clipboard-list me-1"></i> Quản lý đơn hàng
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link nav-link-admin" asp-controller="OutfitSuggestions" asp-action="Index">
-                                    <i class="fa-solid fa-wand-magic-sparkles me-1"></i> Gợi ý phối đồ
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link nav-link-admin" asp-controller="ProductReviews" asp-action="AdminIndex">
-                                    <i class="fa-solid fa-star me-1"></i> Đánh giá
+                                <a class="btn-nav admin-nav-link" asp-controller="Admin" asp-action="Index">
+                                    <i class="fa-solid fa-gauge-high"></i> <span>Trang quản trị</span>
                                 </a>
                             </li>
                         }
@@ -93,23 +73,22 @@
 
                         @if (isLoggedIn)
                         {
-                            <li class="nav-item ms-lg-2">
-                                @await Component.InvokeAsync("CartSummary")
-                            </li>
-                            <li class="nav-item">
-                                <span class="nav-user" title="Xin chào, @currentUserName">
+                            @if (isCustomer)
+                            {
+                                <li class="nav-item ms-lg-2">@await Component.InvokeAsync("CartSummary")</li>
+                            }
+                            <li class="nav-item dropdown account-menu">
+                                <button class="account-menu-toggle dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
                                     <i class="fa-solid fa-circle-user"></i>
-                                    <span>Xin chào, @currentUserName@if (!string.IsNullOrWhiteSpace(currentRole)) { <small>@currentRole</small> }</span>
-                                </span>
-                            </li>
-                            <li class="nav-item">
-                                <form asp-controller="Account" asp-action="Logout" method="post" class="nav-auth-form">
-                                    @Html.AntiForgeryToken()
-                                    <button type="submit" class="btn-nav btn-nav-light">
-                                        <i class="fa-solid fa-right-from-bracket"></i>
-                                        <span>Đăng xuất</span>
-                                    </button>
-                                </form>
+                                    <span>@currentUserName</span>
+                                </button>
+                                <div class="dropdown-menu dropdown-menu-end account-dropdown">
+                                    <div class="account-dropdown-heading"><strong>Xin chào, @currentUserName</strong>@if (!string.IsNullOrWhiteSpace(currentRole)) { <small>@currentRole</small> }</div>
+                                    <form asp-controller="Account" asp-action="Logout" method="post">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="dropdown-item"><i class="fa-solid fa-right-from-bracket"></i> Đăng xuất</button>
+                                    </form>
+                                </div>
                             </li>
                         }
                         else
@@ -157,10 +136,10 @@
                 <p>Cửa hàng thời trang hiện đại với sản phẩm có kích cỡ, màu sắc và tồn kho rõ ràng theo từng biến thể.</p>
             </div>
             <div class="footer-col">
-                <h3>Liên kết</h3>
+                <h3>Hỗ trợ khách hàng</h3>
                 <a asp-controller="Home" asp-action="Index">Trang chủ</a>
                 <a href="/#san-pham">Sản phẩm</a>
-                @if (isLoggedIn)
+                @if (isCustomer)
                 {
                     <a asp-controller="Cart" asp-action="Index">Giỏ hàng</a>
                 }
@@ -169,18 +148,19 @@
                     <a asp-controller="Wishlist" asp-action="Index">Sản phẩm yêu thích</a>
                     <a asp-controller="Orders" asp-action="MyOrders">Đơn hàng của tôi</a>
                 }
-                @if (isAdmin)
-                {
-                    <a asp-controller="Admin" asp-action="Index">Bảng điều khiển</a>
-                    <a asp-controller="Products" asp-action="Index">Quản lý sản phẩm</a>
-                    <a asp-controller="Orders" asp-action="AdminIndex">Quản lý đơn hàng</a>
-                    <a asp-controller="OutfitSuggestions" asp-action="Index">Gợi ý phối đồ</a>
-                    <a asp-controller="ProductReviews" asp-action="AdminIndex">Quản lý đánh giá</a>
-                }
                 <a asp-controller="Home" asp-action="Contact">Liên hệ</a>
             </div>
             <div class="footer-col">
-                <h3>Theo dõi</h3>
+                <h3>Chính sách</h3>
+                <span class="footer-text-link">Chính sách đổi trả</span>
+                <span class="footer-text-link">Chính sách vận chuyển</span>
+                <span class="footer-text-link">Hướng dẫn chọn kích cỡ</span>
+                @if (isAdmin) { <a asp-controller="Admin" asp-action="Index">Trang quản trị</a> }
+            </div>
+            <div class="footer-col">
+                <h3>Liên hệ</h3>
+                <p class="footer-contact"><i class="fa-solid fa-location-dot"></i> Việt Nam</p>
+                <p class="footer-contact"><i class="fa-solid fa-envelope"></i> hotro@smartstore.vn</p>
                 <div class="footer-socials">
                     <a href="#" aria-label="Facebook"><i class="fa-brands fa-facebook-f"></i></a>
                     <a href="#" aria-label="X"><i class="fa-brands fa-x-twitter"></i></a>
