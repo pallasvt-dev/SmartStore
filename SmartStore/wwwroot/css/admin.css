@@ -73,6 +73,8 @@ body.admin-body { margin: 0; color: var(--admin-text); background: var(--admin-b
 .admin-topbar-logout { width: 40px; height: 40px; border: 1px solid #fecaca; border-radius: 8px; color: #b91c1c; background: #fef2f2; }
 
 .admin-content { min-width: 0; padding: 22px 24px 64px; }
+.admin-content:focus { outline: 0; }
+.admin-is-navigating .admin-content { opacity: .55; pointer-events: none; transition: opacity .12s ease; }
 .admin-breadcrumb { display: flex; align-items: center; gap: 8px; margin-bottom: 18px; color: var(--admin-muted); font-size: .74rem; font-weight: 700; }
 .admin-breadcrumb a { color: var(--admin-primary); }
 .admin-breadcrumb i { font-size: .6rem; }

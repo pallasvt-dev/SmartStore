@@ -79,7 +79,7 @@
                 </div>
             </header>
 
-            <main class="admin-content">
+            <main class="admin-content" id="adminContent" tabindex="-1">
                 <nav class="admin-breadcrumb" aria-label="Điều hướng"><a asp-controller="Admin" asp-action="Index">Quản trị</a><i class="fa-solid fa-chevron-right"></i><span>@ViewData["Title"]</span></nav>
                 @if (TempData["AuthMessage"] != null)
                 {

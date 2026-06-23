@@ -174,9 +174,24 @@ namespace SmartStore.Data
                 entity.Property(order => order.ShippingFee).HasColumnType("decimal(18,2)");
                 entity.Property(order => order.Discount).HasColumnType("decimal(18,2)");
                 entity.Property(order => order.Total).HasColumnType("decimal(18,2)");
-                entity.Property(order => order.OrderStatus).HasConversion<string>().HasMaxLength(30).IsRequired();
-                entity.Property(order => order.PaymentMethod).HasConversion<string>().HasMaxLength(30).IsRequired();
-                entity.Property(order => order.PaymentStatus).HasConversion<string>().HasMaxLength(30).IsRequired();
+                entity.Property(order => order.OrderStatus)
+                    .HasConversion(
+                        status => status.ToString(),
+                        value => ConvertOrderStatusFromProvider(value))
+                    .HasMaxLength(30)
+                    .IsRequired();
+                entity.Property(order => order.PaymentMethod)
+                    .HasConversion(
+                        method => method.ToString(),
+                        value => ConvertPaymentMethodFromProvider(value))
+                    .HasMaxLength(30)
+                    .IsRequired();
+                entity.Property(order => order.PaymentStatus)
+                    .HasConversion(
+                        status => status.ToString(),
+                        value => ConvertPaymentStatusFromProvider(value))
+                    .HasMaxLength(30)
+                    .IsRequired();
 
                 entity.HasOne(order => order.User)
                     .WithMany(user => user.Orders)
@@ -274,6 +289,69 @@ namespace SmartStore.Data
                     .HasForeignKey(item => item.SuggestedProductId)
                     .OnDelete(DeleteBehavior.Restrict);
             });
+        }
+
+        private static OrderStatus ConvertOrderStatusFromProvider(string value)
+        {
+            if (Enum.TryParse<OrderStatus>(value, ignoreCase: true, out var status))
+            {
+                return status;
+            }
+
+            return value.Trim().ToLowerInvariant() switch
+            {
+                "pending" => OrderStatus.ChoXacNhan,
+                "awaitingconfirmation" => OrderStatus.ChoXacNhan,
+                "confirmed" => OrderStatus.DaXacNhan,
+                "processing" => OrderStatus.DaXacNhan,
+                "shipping" => OrderStatus.DangGiao,
+                "shipped" => OrderStatus.DangGiao,
+                "intransit" => OrderStatus.DangGiao,
+                "completed" => OrderStatus.HoanThanh,
+                "delivered" => OrderStatus.HoanThanh,
+                "cancelled" => OrderStatus.DaHuy,
+                "canceled" => OrderStatus.DaHuy,
+                _ => OrderStatus.ChoXacNhan
+            };
+        }
+
+        private static PaymentMethod ConvertPaymentMethodFromProvider(string value)
+        {
+            if (Enum.TryParse<PaymentMethod>(value, ignoreCase: true, out var method))
+            {
+                return method;
+            }
+
+            return value.Trim().ToLowerInvariant() switch
+            {
+                "cash" => PaymentMethod.COD,
+                "cod" => PaymentMethod.COD,
+                "cashondelivery" => PaymentMethod.COD,
+                "banktransfer" => PaymentMethod.ChuyenKhoan,
+                "transfer" => PaymentMethod.ChuyenKhoan,
+                "bank" => PaymentMethod.ChuyenKhoan,
+                _ => PaymentMethod.COD
+            };
+        }
+
+        private static PaymentStatus ConvertPaymentStatusFromProvider(string value)
+        {
+            if (Enum.TryParse<PaymentStatus>(value, ignoreCase: true, out var status))
+            {
+                return status;
+            }
+
+            return value.Trim().ToLowerInvariant() switch
+            {
+                "unpaid" => PaymentStatus.ChuaThanhToan,
+                "pending" => PaymentStatus.ChuaThanhToan,
+                "notpaid" => PaymentStatus.ChuaThanhToan,
+                "paid" => PaymentStatus.DaThanhToan,
+                "completed" => PaymentStatus.DaThanhToan,
+                "refunded" => PaymentStatus.DaHoanTien,
+                "refund" => PaymentStatus.DaHoanTien,
+                _ => PaymentStatus.ChuaThanhToan
+            };
         }
     }
 }

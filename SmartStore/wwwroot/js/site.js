@@ -113,6 +113,9 @@ const initializePage = (root = document) => {
     });
 };
 
+window.SmartStore = window.SmartStore || {};
+window.SmartStore.initializePage = initializePage;
+
 const setupWishlistForms = (root = document) => {
     root.querySelectorAll(".js-wishlist-toggle-form").forEach((form) => {
         if (form.dataset.wishlistReady === "true") {
